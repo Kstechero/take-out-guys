@@ -1,5 +1,6 @@
 package com.sky.service.impl;
 
+import com.fasterxml.jackson.databind.JsonSerializable.Base;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.sky.constant.MessageConstant;
@@ -18,7 +19,10 @@ import com.sky.result.PageResult;
 import com.sky.service.EmployeeService;
 
 import ch.qos.logback.core.joran.util.beans.BeanUtil;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 
+import java.sql.ResultSet;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -26,6 +30,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
+import org.springframework.web.bind.annotation.PutMapping;
 
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
@@ -130,5 +135,30 @@ public class EmployeeServiceImpl implements EmployeeService {
         employeeMapper.update(employee);
         
     }
+
+    
+    /**
+     * 根据id查询员工
+     * @param id
+     * @return 
+     */
+    public Employee getById(Long id){
+        Employee employee = employeeMapper.getById(id);
+        employee.setPassword("****");
+        return employee;
+
+    }
+    
+
+    public void update(EmployeeDTO employeeDTO){
+        Employee employee = new Employee();
+        BeanUtils.copyProperties(employeeDTO, employee);
+
+        employee.setUpdateTime(LocalDateTime.now());
+        employee.setCreateUser(BaseContext.getCurrentId());
+
+        employeeMapper.update(employee);
+    }
+
 
 }
