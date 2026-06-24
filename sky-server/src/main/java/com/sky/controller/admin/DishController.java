@@ -8,9 +8,15 @@ import org.springframework.web.bind.annotation.RestController;
 import com.sky.dto.DishDTO;
 import com.sky.result.Result;
 import com.sky.service.DishService;
+import com.sky.result.PageResult;
+import com.sky.dto.DishPageQueryDTO;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import java.util.List;
 
 
 @RestController
@@ -31,6 +37,27 @@ public class DishController {
     public Result<String> save(@RequestBody DishDTO dishDTO) {
         log.info("新增菜品：{}", dishDTO);
         dishService.saveWithFlavor(dishDTO);
+        return Result.success();
+    }
+
+    @GetMapping("/page")
+    @ApiOperation("菜品分页查询")
+    public Result<PageResult> page(DishPageQueryDTO dishPageQueryDTO) {
+        log.info("菜品分页查询：{}", dishPageQueryDTO);
+        PageResult pageResult = dishService.pageQuery(dishPageQueryDTO);
+        return Result.success(pageResult);
+    }
+
+    /**
+     * 删除菜品
+     * @param ids
+     * @return
+     */
+    @DeleteMapping
+    @ApiOperation("删除菜品")
+    public Result delete(@RequestParam List<Long> ids) {
+        log.info("批量删除菜品：{}", ids);
+        dishService.deleteBatch(ids);
         return Result.success();
     }
 }
