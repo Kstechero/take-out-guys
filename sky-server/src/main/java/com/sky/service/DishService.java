@@ -3,6 +3,7 @@ package com.sky.service;
 
 import com.sky.vo.DishVO;
 import com.sky.dto.DishDTO;
+import com.sky.entity.Dish;
 import com.sky.result.PageResult;
 import com.sky.dto.DishPageQueryDTO;
 import java.util.List;
@@ -24,6 +25,8 @@ public interface DishService {
      * @return
      */
     public PageResult pageQuery(DishPageQueryDTO dishPageQueryDTO);
+
+    List<Dish> list(Long categoryId);
 
 
     /**

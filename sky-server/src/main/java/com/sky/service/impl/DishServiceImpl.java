@@ -74,12 +74,25 @@ public class DishServiceImpl implements DishService {
         return new PageResult(page.getTotal(), page.getResult());
     }
 
+    @Override
+    public List<Dish> list(Long categoryId) {
+        Dish dish = Dish.builder()
+                .categoryId(categoryId)
+                .status(StatusConstant.ENABLE)
+                .build();
+        return dishMapper.list(dish);
+    }
+
     /**
      * 批量删除菜品
      * @param ids
      */
     @Deprecated
     public void deleteBatch(List<Long> ids) {
+        if (ids == null || ids.size() == 0 || ids.contains(null)) {
+            throw new DeletionNotAllowedException("请选择要删除的数据");
+        }
+
         //判断当前菜品是否能够删除，是否存在起售中的菜品
         for(Long id : ids) {
             Dish dish = dishMapper.getById(id);
