@@ -33,10 +33,12 @@ public class JwtTokenUserInterceptor implements HandlerInterceptor {
      * @throws Exception
      */
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        
-        
-        
-        
+        // 浏览器跨域访问会先发送不携带 JWT 的 OPTIONS 预检请求。
+        // 预检必须放行，真正的业务请求仍会继续进行 JWT 校验。
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            return true;
+        }
+
         //判断当前拦截到的是Controller的方法还是其他资源
         if (!(handler instanceof HandlerMethod)) {
             //当前拦截到的不是动态方法，直接放行
@@ -48,16 +50,17 @@ public class JwtTokenUserInterceptor implements HandlerInterceptor {
 
         //2、校验令牌
         try {
-            log.info("jwt校验:{}", token);
+            log.info("用户端jwt校验，请求路径：{}，token：{}", request.getRequestURI(), token);
             Claims claims = JwtUtil.parseJWT(jwtProperties.getUserSecretKey(), token);
             Long userId = Long.valueOf(claims.get(JwtClaimsConstant.USER_ID).toString());
-            log.info("当前用户id：", userId);
+            log.info("当前用户id：{}", userId);
             BaseContext.setCurrentId(userId);
             //3、通过，放行
             return true;
 
         } catch (Exception ex) {
             //4、不通过，响应401状态码
+            log.warn("用户端jwt校验失败，请求路径：{}，原因：{}", request.getRequestURI(), ex.getMessage());
             response.setStatus(401);
             return false;
         }

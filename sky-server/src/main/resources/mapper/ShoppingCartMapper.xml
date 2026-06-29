@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sky.mapper.ShoppingCartMapper">
+
+    <!--
+        查询当前用户购物车中的同一商品。
+        菜品需要同时匹配口味；套餐只需要匹配套餐 id。
+    -->
+    <select id="getByUserIdAndGoods" resultType="com.sky.entity.ShoppingCart">
+        select *
+        from shopping_cart
+        <where>
+            user_id = #{userId}
+            <if test="dishId != null">
+                and dish_id = #{dishId}
+                <!-- 口味为空时使用 IS NULL，避免把 null 当作普通参数比较。 -->
+                <choose>
+                    <when test="dishFlavor != null and dishFlavor != ''">
+                        and dish_flavor = #{dishFlavor}
+                    </when>
+                    <otherwise>
+                        and dish_flavor is null
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="setmealId != null">
+                and setmeal_id = #{setmealId}
+            </if>
+        </where>
+    </select>
+
+</mapper>

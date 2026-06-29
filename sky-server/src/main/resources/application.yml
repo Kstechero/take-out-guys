@@ -43,6 +43,8 @@ sky:
     # 设置前端传递过来的令牌名称
     admin-token-name: token
     user-secret-key: jwdlh
+    # 用户端 JWT 有效期：2 小时（单位：毫秒）
+    user-ttl: 7200000
     user-token-name: authentication
 
   wechat:
