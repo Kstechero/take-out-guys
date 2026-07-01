@@ -149,6 +149,7 @@ public class DishServiceImpl implements DishService {
      * 根据id修改菜品信息和对应的口味信息
      * @param dishDTO
      */
+    @Transactional
     public void updateWithFlavor(DishDTO dishDTO){
             
         //更新菜品表中的数据

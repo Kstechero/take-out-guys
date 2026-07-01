@@ -35,6 +35,15 @@ logging:
         controller: info
 
 sky:
+  ai:
+    # GX10 上的 vLLM 提供 OpenAI 兼容协议。密钥必须通过环境变量注入，禁止提交到仓库。
+    base-url: ${GX10_AI_BASE_URL:http://ai.tunayoshi.top:8000/v1}
+    api-key: ${GX10_AI_API_KEY:}
+    model: ${GX10_AI_MODEL:ornith}
+    connect-timeout: ${GX10_AI_CONNECT_TIMEOUT:10000}
+    read-timeout: ${GX10_AI_READ_TIMEOUT:120000}
+    max-tokens: ${GX10_AI_MAX_TOKENS:2048}
+    temperature: ${GX10_AI_TEMPERATURE:0.3}
   jwt:
     # 设置jwt签名加密时使用的秘钥
     admin-secret-key: itcast
