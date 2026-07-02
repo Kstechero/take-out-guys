@@ -1,0 +1,357 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Takeout Guys AI Agent API",
+    "description": "Apifox import document. User AI endpoints are proposed unless explicitly marked implemented. Admin streaming chat and health endpoints are implemented.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    { "url": "http://localhost:8080", "description": "Local Spring Boot" }
+  ],
+  "tags": [
+    { "name": "User AI", "description": "小程序 AI Agent（待后端实现）" },
+    { "name": "Admin AI", "description": "管理端运营 Agent" },
+    { "name": "Admin Knowledge", "description": "管理端 RAG 知识库（待实现）" }
+  ],
+  "paths": {
+    "/user/ai/chat": {
+      "post": {
+        "tags": ["User AI"],
+        "summary": "非流式 AI 对话",
+        "description": "状态：待实现。支持菜品、订单、配送与售后对话。",
+        "operationId": "userAiChat",
+        "security": [{ "UserToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserAiChatRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "成功", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserAiChatResult" } } } },
+          "503": { "$ref": "#/components/responses/AiUnavailable" }
+        }
+      }
+    },
+    "/user/ai/chat/stream": {
+      "post": {
+        "tags": ["User AI"],
+        "summary": "SSE 流式 AI 对话",
+        "description": "状态：待实现。事件类型：session、delta、tool_start、tool_result、done、error。",
+        "operationId": "userAiChatStream",
+        "security": [{ "UserToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/UserAiChatRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "SSE event stream", "content": { "text/event-stream": { "schema": { "type": "string", "example": "event: delta\ndata: {\"content\":\"你好\"}\n\n" } } } },
+          "503": { "$ref": "#/components/responses/AiUnavailable" }
+        }
+      }
+    },
+    "/user/ai/recommend": {
+      "post": {
+        "tags": ["User AI"],
+        "summary": "基于真实可售菜品的智能推荐",
+        "description": "状态：待实现。所有返回 dishId 必须回查数据库且处于启售状态。",
+        "operationId": "userAiRecommend",
+        "security": [{ "UserToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AiRecommendRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "成功", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AiRecommendResult" } } } }
+        }
+      }
+    },
+    "/user/ai/review/write": {
+      "post": {
+        "tags": ["User AI"],
+        "summary": "AI 帮写或润色评价",
+        "description": "状态：待实现。必须校验订单属于当前用户且已经完成。",
+        "operationId": "userAiWriteReview",
+        "security": [{ "UserToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AiReviewRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "成功", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AiReviewResult" } } } }
+        }
+      }
+    },
+    "/user/ai/session/list": {
+      "get": {
+        "tags": ["User AI"],
+        "summary": "查询当前用户 AI 会话",
+        "description": "状态：待实现。",
+        "operationId": "getUserAiSessions",
+        "security": [{ "UserToken": [] }],
+        "parameters": [
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1, "minimum": 1 } },
+          { "name": "pageSize", "in": "query", "schema": { "type": "integer", "default": 20, "minimum": 1, "maximum": 100 } }
+        ],
+        "responses": {
+          "200": { "description": "成功", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AiSessionPageResult" } } } }
+        }
+      }
+    },
+    "/user/ai/session/{sessionId}/messages": {
+      "get": {
+        "tags": ["User AI"],
+        "summary": "查询会话消息历史",
+        "description": "状态：待实现。只能查询自己的会话。",
+        "operationId": "getUserAiMessages",
+        "security": [{ "UserToken": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/SessionId" }],
+        "responses": {
+          "200": { "description": "成功", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AiMessageListResult" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/user/ai/session/{sessionId}": {
+      "delete": {
+        "tags": ["User AI"],
+        "summary": "删除自己的 AI 会话",
+        "description": "状态：待实现。",
+        "operationId": "deleteUserAiSession",
+        "security": [{ "UserToken": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/SessionId" }],
+        "responses": {
+          "200": { "description": "成功", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/EmptyResult" } } } },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/admin/ai/chat/stream": {
+      "post": {
+        "tags": ["Admin AI"],
+        "summary": "管理端运营 Agent 流式对话",
+        "description": "状态：已实现。当前为只读 Agent；SSE 事件：meta、delta、done、error。",
+        "operationId": "adminAiChatStream",
+        "security": [{ "AdminToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AdminAiChatRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "SSE event stream", "content": { "text/event-stream": { "schema": { "type": "string", "example": "event: delta\ndata: {\"content\":\"经营分析\"}\n\n" } } } },
+          "503": { "$ref": "#/components/responses/AiUnavailable" }
+        }
+      }
+    },
+    "/admin/ai/health": {
+      "get": {
+        "tags": ["Admin AI"],
+        "summary": "检查 GX10 模型服务状态",
+        "description": "状态：已实现。响应不得包含 API Key。",
+        "operationId": "adminAiHealth",
+        "security": [{ "AdminToken": [] }],
+        "responses": {
+          "200": { "description": "成功", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/AiHealthResult" } } } }
+        }
+      }
+    },
+    "/admin/ai/knowledge/reload": {
+      "post": {
+        "tags": ["Admin Knowledge"],
+        "summary": "重新加载并向量化 RAG 文档",
+        "description": "状态：待实现。",
+        "operationId": "reloadAiKnowledge",
+        "security": [{ "AdminToken": [] }],
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/KnowledgeReloadRequest" } } }
+        },
+        "responses": {
+          "200": { "description": "成功", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/KnowledgeJobResult" } } } }
+        }
+      }
+    },
+    "/admin/ai/knowledge/status/{jobId}": {
+      "get": {
+        "tags": ["Admin Knowledge"],
+        "summary": "查询知识库重建任务",
+        "description": "状态：待实现。",
+        "operationId": "getAiKnowledgeJob",
+        "security": [{ "AdminToken": [] }],
+        "parameters": [{ "name": "jobId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "成功", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/KnowledgeJobStatusResult" } } } }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "UserToken": { "type": "apiKey", "in": "header", "name": "authentication", "description": "小程序用户 JWT" },
+      "AdminToken": { "type": "apiKey", "in": "header", "name": "token", "description": "管理端 JWT" }
+    },
+    "parameters": {
+      "SessionId": { "name": "sessionId", "in": "path", "required": true, "schema": { "type": "integer", "format": "int64" } }
+    },
+    "responses": {
+      "AiUnavailable": { "description": "AI 服务不可用", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResult" } } } },
+      "NotFound": { "description": "资源不存在", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResult" } } } }
+    },
+    "schemas": {
+      "UserAiChatRequest": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "sessionId": { "type": "integer", "format": "int64", "nullable": true },
+          "message": { "type": "string", "maxLength": 2000, "example": "推荐一份30元以内的晚餐" },
+          "enableTools": { "type": "boolean", "default": true }
+        }
+      },
+      "UserAiChatData": {
+        "type": "object",
+        "properties": {
+          "sessionId": { "type": "integer", "format": "int64" },
+          "messageId": { "type": "integer", "format": "int64" },
+          "content": { "type": "string" },
+          "messageType": { "type": "string", "enum": ["text", "dish_cards", "order_card", "transfer"] },
+          "toolCalls": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+          "usage": { "$ref": "#/components/schemas/TokenUsage" }
+        }
+      },
+      "TokenUsage": {
+        "type": "object",
+        "properties": {
+          "promptTokens": { "type": "integer" },
+          "completionTokens": { "type": "integer" }
+        }
+      },
+      "AiRecommendRequest": {
+        "type": "object",
+        "required": ["query"],
+        "properties": {
+          "query": { "type": "string", "example": "一个人，想吃辣，预算30元" },
+          "budget": { "type": "number", "format": "double", "nullable": true },
+          "people": { "type": "integer", "nullable": true, "minimum": 1 },
+          "limit": { "type": "integer", "default": 6, "maximum": 10 }
+        }
+      },
+      "AiDishRecommendation": {
+        "type": "object",
+        "properties": {
+          "dishId": { "type": "integer", "format": "int64" },
+          "name": { "type": "string" },
+          "image": { "type": "string" },
+          "price": { "type": "number", "format": "double" },
+          "categoryName": { "type": "string" },
+          "description": { "type": "string" },
+          "reason": { "type": "string" }
+        }
+      },
+      "AiReviewRequest": {
+        "type": "object",
+        "required": ["orderId", "action"],
+        "properties": {
+          "orderId": { "type": "integer", "format": "int64" },
+          "instruction": { "type": "string", "maxLength": 500 },
+          "draft": { "type": "string", "maxLength": 140 },
+          "action": { "type": "string", "enum": ["write", "polish", "continue", "shorten"] }
+        }
+      },
+      "AiReviewData": {
+        "type": "object",
+        "properties": {
+          "content": { "type": "string", "maxLength": 140 },
+          "blocked": { "type": "boolean" },
+          "sensitiveWords": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "AiSession": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "title": { "type": "string" },
+          "updateTime": { "type": "string", "format": "date-time" },
+          "lastMessage": { "type": "string" }
+        }
+      },
+      "AiMessage": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "role": { "type": "string", "enum": ["user", "assistant", "tool"] },
+          "content": { "type": "string" },
+          "messageType": { "type": "string" },
+          "createTime": { "type": "string", "format": "date-time" }
+        }
+      },
+      "AdminAiChatRequest": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "sessionId": { "type": "integer", "format": "int64", "nullable": true },
+          "message": { "type": "string", "example": "分析最近7天经营情况" },
+          "context": {
+            "type": "object",
+            "properties": {
+              "dateBegin": { "type": "string", "format": "date", "nullable": true },
+              "dateEnd": { "type": "string", "format": "date", "nullable": true }
+            }
+          }
+        }
+      },
+      "AiHealthData": {
+        "type": "object",
+        "properties": {
+          "status": { "type": "string", "enum": ["UP", "DOWN"] },
+          "provider": { "type": "string", "example": "vllm" },
+          "model": { "type": "string", "example": "ornith" },
+          "latencyMs": { "type": "integer", "format": "int64" },
+          "checkedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "KnowledgeReloadRequest": {
+        "type": "object",
+        "properties": {
+          "scope": { "type": "string", "enum": ["all", "changed"], "default": "changed" },
+          "async": { "type": "boolean", "default": true }
+        }
+      },
+      "KnowledgeJobData": {
+        "type": "object",
+        "properties": {
+          "jobId": { "type": "string" },
+          "status": { "type": "string", "enum": ["QUEUED", "RUNNING", "DONE", "FAILED"] }
+        }
+      },
+      "KnowledgeJobStatusData": {
+        "allOf": [
+          { "$ref": "#/components/schemas/KnowledgeJobData" },
+          { "type": "object", "properties": { "processed": { "type": "integer" }, "total": { "type": "integer" }, "message": { "type": "string", "nullable": true } } }
+        ]
+      },
+      "UserAiChatResult": { "allOf": [{ "$ref": "#/components/schemas/ResultBase" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/UserAiChatData" } } }] },
+      "AiRecommendResult": { "allOf": [{ "$ref": "#/components/schemas/ResultBase" }, { "type": "object", "properties": { "data": { "type": "object", "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/AiDishRecommendation" } } } } } }] },
+      "AiReviewResult": { "allOf": [{ "$ref": "#/components/schemas/ResultBase" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/AiReviewData" } } }] },
+      "AiSessionPageResult": { "allOf": [{ "$ref": "#/components/schemas/ResultBase" }, { "type": "object", "properties": { "data": { "type": "object", "properties": { "total": { "type": "integer", "format": "int64" }, "records": { "type": "array", "items": { "$ref": "#/components/schemas/AiSession" } } } } } }] },
+      "AiMessageListResult": { "allOf": [{ "$ref": "#/components/schemas/ResultBase" }, { "type": "object", "properties": { "data": { "type": "array", "items": { "$ref": "#/components/schemas/AiMessage" } } } }] },
+      "AiHealthResult": { "allOf": [{ "$ref": "#/components/schemas/ResultBase" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/AiHealthData" } } }] },
+      "KnowledgeJobResult": { "allOf": [{ "$ref": "#/components/schemas/ResultBase" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/KnowledgeJobData" } } }] },
+      "KnowledgeJobStatusResult": { "allOf": [{ "$ref": "#/components/schemas/ResultBase" }, { "type": "object", "properties": { "data": { "$ref": "#/components/schemas/KnowledgeJobStatusData" } } }] },
+      "EmptyResult": { "allOf": [{ "$ref": "#/components/schemas/ResultBase" }, { "type": "object", "properties": { "data": { "nullable": true } } }] },
+      "ResultBase": {
+        "type": "object",
+        "required": ["code"],
+        "properties": {
+          "code": { "type": "integer", "example": 1 },
+          "msg": { "type": "string", "nullable": true }
+        }
+      },
+      "ErrorResult": {
+        "type": "object",
+        "properties": {
+          "code": { "type": "integer", "example": 0 },
+          "msg": { "type": "string", "example": "AI_SERVICE_UNAVAILABLE" },
+          "data": { "nullable": true }
+        }
+      }
+    }
+  }
+}

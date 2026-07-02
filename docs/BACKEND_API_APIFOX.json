@@ -1,0 +1,5067 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Takeout Guys 全部后端接口",
+    "description": "Apifox 可直接导入。由运行中的 Springfox 文档生成；AI 规划接口另见 AI_AGENT_API_APIFOX.json。",
+    "version": "2.0"
+  },
+  "host": "localhost:8080",
+  "basePath": "/",
+  "schemes": [
+    "http"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "tags": [
+    {
+      "name": "report-controller",
+      "description": "Report Controller"
+    },
+    {
+      "name": "workspace-controller",
+      "description": "Workspace Controller"
+    },
+    {
+      "name": "分类相关接口",
+      "description": "Category Controller"
+    },
+    {
+      "name": "员工相关接口",
+      "description": "Employee Controller"
+    },
+    {
+      "name": "商铺相关接口",
+      "description": "Shop Controller"
+    },
+    {
+      "name": "套餐相关接口",
+      "description": "Setmeal Controller"
+    },
+    {
+      "name": "管理端 AI Agent 接口",
+      "description": "Admin Ai Controller"
+    },
+    {
+      "name": "管理端订单接口",
+      "description": "Order Controller"
+    },
+    {
+      "name": "菜品相关接口",
+      "description": "Dish Controller"
+    },
+    {
+      "name": "通用接口",
+      "description": "Common Controller"
+    },
+    {
+      "name": "C端-分类接口",
+      "description": "Category Controller"
+    },
+    {
+      "name": "C端-套餐浏览接口",
+      "description": "Setmeal Controller"
+    },
+    {
+      "name": "C端-菜品浏览接口",
+      "description": "Dish Controller"
+    },
+    {
+      "name": "C端地址簿接口",
+      "description": "Address Book Controller"
+    },
+    {
+      "name": "C端用户相关接口",
+      "description": "User Controller"
+    },
+    {
+      "name": "商铺相关接口",
+      "description": "Shop Controller"
+    },
+    {
+      "name": "用户端订单接口",
+      "description": "Order Controller"
+    },
+    {
+      "name": "用户端购物车接口",
+      "description": "Shopping Cart Controller"
+    },
+    {
+      "name": "支付回调",
+      "description": "微信支付通知"
+    }
+  ],
+  "paths": {
+    "/admin/ai/chat/stream": {
+      "post": {
+        "tags": [
+          "管理端 AI Agent 接口"
+        ],
+        "summary": "管理端运营 Agent 流式对话",
+        "operationId": "streamUsingPOST",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "text/event-stream"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "request",
+            "description": "request",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AdminAiChatRequestDTO",
+              "originalRef": "AdminAiChatRequestDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/SseEmitter",
+              "originalRef": "SseEmitter"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/ai/health": {
+      "get": {
+        "tags": [
+          "管理端 AI Agent 接口"
+        ],
+        "summary": "检查 GX10 模型服务状态",
+        "operationId": "healthUsingGET",
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«Map«string,object»»",
+              "originalRef": "Result«Map«string,object»»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/category": {
+      "post": {
+        "tags": [
+          "分类相关接口"
+        ],
+        "summary": "新增分类",
+        "operationId": "saveUsingPOST_1",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "categoryDTO",
+            "description": "categoryDTO",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CategoryDTO",
+              "originalRef": "CategoryDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "分类相关接口"
+        ],
+        "summary": "修改分类",
+        "operationId": "updateUsingPUT_1",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "categoryDTO",
+            "description": "categoryDTO",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CategoryDTO",
+              "originalRef": "CategoryDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "分类相关接口"
+        ],
+        "summary": "删除分类",
+        "operationId": "deleteByIdUsingDELETE_1",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "id",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/admin/category/list": {
+      "get": {
+        "tags": [
+          "分类相关接口"
+        ],
+        "summary": "根据类型查询分类",
+        "operationId": "listUsingGET_5",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "description": "type",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«List«Category»»",
+              "originalRef": "Result«List«Category»»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/category/page": {
+      "get": {
+        "tags": [
+          "分类相关接口"
+        ],
+        "summary": "分类分页查询",
+        "operationId": "pageUsingGET",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«PageResult»",
+              "originalRef": "Result«PageResult»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/category/status/{status}": {
+      "post": {
+        "tags": [
+          "分类相关接口"
+        ],
+        "summary": "启用禁用分类",
+        "operationId": "startOrStopUsingPOST",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "status",
+            "in": "path",
+            "description": "status",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/common/upload": {
+      "post": {
+        "tags": [
+          "通用接口"
+        ],
+        "summary": "文件上传",
+        "operationId": "uploadUsingPOST",
+        "consumes": [
+          "multipart/form-data"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "file",
+            "description": "file",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "binary"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/dish": {
+      "post": {
+        "tags": [
+          "菜品相关接口"
+        ],
+        "summary": "新增菜品",
+        "operationId": "saveUsingPOST_2",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "dishDTO",
+            "description": "dishDTO",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DishDTO",
+              "originalRef": "DishDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "菜品相关接口"
+        ],
+        "summary": "修改菜品信息",
+        "operationId": "getByIdWithFlavorUsingPUT",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "dishDTO",
+            "description": "dishDTO",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/DishDTO",
+              "originalRef": "DishDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«DishDTO»",
+              "originalRef": "Result«DishDTO»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "菜品相关接口"
+        ],
+        "summary": "删除菜品",
+        "operationId": "deleteUsingDELETE",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "query",
+            "description": "ids",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result",
+              "originalRef": "Result"
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/admin/dish/list": {
+      "get": {
+        "tags": [
+          "菜品相关接口"
+        ],
+        "summary": "根据分类id查询菜品",
+        "operationId": "listUsingGET_6",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "categoryId",
+            "in": "query",
+            "description": "categoryId",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«List«Dish»»",
+              "originalRef": "Result«List«Dish»»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/dish/page": {
+      "get": {
+        "tags": [
+          "菜品相关接口"
+        ],
+        "summary": "菜品分页查询",
+        "operationId": "pageUsingGET_1",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "categoryId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«PageResult»",
+              "originalRef": "Result«PageResult»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/dish/status/{status}": {
+      "post": {
+        "tags": [
+          "菜品相关接口"
+        ],
+        "summary": "菜品起售、停售",
+        "operationId": "startOrStopUsingPOST_1",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "status",
+            "in": "path",
+            "description": "status",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/dish/{id}": {
+      "get": {
+        "tags": [
+          "菜品相关接口"
+        ],
+        "summary": "根据id查询菜品",
+        "operationId": "getByIdUsingGET_1",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«DishVO»",
+              "originalRef": "Result«DishVO»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/employee": {
+      "post": {
+        "tags": [
+          "员工相关接口"
+        ],
+        "summary": "新增员工",
+        "operationId": "saveUsingPOST_3",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "employeeDTO",
+            "description": "employeeDTO",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/EmployeeDTO",
+              "originalRef": "EmployeeDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result",
+              "originalRef": "Result"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "员工相关接口"
+        ],
+        "summary": "编辑员工信息",
+        "operationId": "updateUsingPUT_2",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "employeeDTO",
+            "description": "employeeDTO",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/EmployeeDTO",
+              "originalRef": "EmployeeDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result",
+              "originalRef": "Result"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/employee/editPassword": {
+      "put": {
+        "tags": [
+          "员工相关接口"
+        ],
+        "summary": "修改密码",
+        "operationId": "editPasswordUsingPUT",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "dto",
+            "description": "dto",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/PasswordEditDTO",
+              "originalRef": "PasswordEditDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/employee/login": {
+      "post": {
+        "tags": [
+          "员工相关接口"
+        ],
+        "summary": "员工登陆",
+        "operationId": "loginUsingPOST_1",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "employeeLoginDTO",
+            "description": "employeeLoginDTO",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/EmployeeLoginDTO",
+              "originalRef": "EmployeeLoginDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«EmployeeLoginVO»",
+              "originalRef": "Result«EmployeeLoginVO»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/employee/logout": {
+      "post": {
+        "tags": [
+          "员工相关接口"
+        ],
+        "summary": "员工退出",
+        "operationId": "logoutUsingPOST_1",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/employee/page": {
+      "get": {
+        "tags": [
+          "员工相关接口"
+        ],
+        "summary": "员工分页查询",
+        "operationId": "pageUsingGET_2",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«PageResult»",
+              "originalRef": "Result«PageResult»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/employee/status/{status}": {
+      "post": {
+        "tags": [
+          "员工相关接口"
+        ],
+        "summary": "启用禁用员工账号",
+        "operationId": "startOrStopUsingPOST_2",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "id",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "status",
+            "in": "path",
+            "description": "status",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result",
+              "originalRef": "Result"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/employee/{id}": {
+      "get": {
+        "tags": [
+          "员工相关接口"
+        ],
+        "summary": "根据id查询员工信息",
+        "operationId": "getByIdUsingGET_2",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«Employee»",
+              "originalRef": "Result«Employee»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/order/cancel": {
+      "put": {
+        "tags": [
+          "管理端订单接口"
+        ],
+        "summary": "取消订单",
+        "operationId": "cancelUsingPUT_1",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "dto",
+            "description": "dto",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OrdersCancelDTO",
+              "originalRef": "OrdersCancelDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/order/complete/{id}": {
+      "put": {
+        "tags": [
+          "管理端订单接口"
+        ],
+        "summary": "完成订单",
+        "operationId": "completeUsingPUT",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/order/conditionSearch": {
+      "get": {
+        "tags": [
+          "管理端订单接口"
+        ],
+        "summary": "订单搜索",
+        "operationId": "conditionSearchUsingGET",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "beginTime",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "endTime",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "date-time"
+          },
+          {
+            "name": "number",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "phone",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«PageResult»",
+              "originalRef": "Result«PageResult»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/order/confirm": {
+      "put": {
+        "tags": [
+          "管理端订单接口"
+        ],
+        "summary": "接单",
+        "operationId": "confirmUsingPUT",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "dto",
+            "description": "dto",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OrdersConfirmDTO",
+              "originalRef": "OrdersConfirmDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/order/delivery/{id}": {
+      "put": {
+        "tags": [
+          "管理端订单接口"
+        ],
+        "summary": "派送订单",
+        "operationId": "deliveryUsingPUT",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/order/details/{id}": {
+      "get": {
+        "tags": [
+          "管理端订单接口"
+        ],
+        "summary": "查询订单详情",
+        "operationId": "detailsUsingGET_1",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«OrderVO»",
+              "originalRef": "Result«OrderVO»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/order/rejection": {
+      "put": {
+        "tags": [
+          "管理端订单接口"
+        ],
+        "summary": "拒单",
+        "operationId": "rejectionUsingPUT",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "dto",
+            "description": "dto",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OrdersRejectionDTO",
+              "originalRef": "OrdersRejectionDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/order/statistics": {
+      "get": {
+        "tags": [
+          "管理端订单接口"
+        ],
+        "summary": "订单数量统计",
+        "operationId": "statisticsUsingGET",
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«OrderStatisticsVO»",
+              "originalRef": "Result«OrderStatisticsVO»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/report/export": {
+      "get": {
+        "tags": [
+          "report-controller"
+        ],
+        "summary": "export",
+        "operationId": "exportUsingGET",
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/report/ordersStatistics": {
+      "get": {
+        "tags": [
+          "report-controller"
+        ],
+        "summary": "orders",
+        "operationId": "ordersUsingGET",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "begin",
+            "in": "query",
+            "description": "begin",
+            "required": false,
+            "type": "string",
+            "format": "date"
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "description": "end",
+            "required": false,
+            "type": "string",
+            "format": "date"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«OrderReportVO»",
+              "originalRef": "Result«OrderReportVO»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/report/top10": {
+      "get": {
+        "tags": [
+          "report-controller"
+        ],
+        "summary": "top10",
+        "operationId": "top10UsingGET",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "begin",
+            "in": "query",
+            "description": "begin",
+            "required": false,
+            "type": "string",
+            "format": "date"
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "description": "end",
+            "required": false,
+            "type": "string",
+            "format": "date"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«SalesTop10ReportVO»",
+              "originalRef": "Result«SalesTop10ReportVO»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/report/turnoverStatistics": {
+      "get": {
+        "tags": [
+          "report-controller"
+        ],
+        "summary": "turnover",
+        "operationId": "turnoverUsingGET",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "begin",
+            "in": "query",
+            "description": "begin",
+            "required": false,
+            "type": "string",
+            "format": "date"
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "description": "end",
+            "required": false,
+            "type": "string",
+            "format": "date"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«TurnoverReportVO»",
+              "originalRef": "Result«TurnoverReportVO»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/report/userStatistics": {
+      "get": {
+        "tags": [
+          "report-controller"
+        ],
+        "summary": "users",
+        "operationId": "usersUsingGET",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "begin",
+            "in": "query",
+            "description": "begin",
+            "required": false,
+            "type": "string",
+            "format": "date"
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "description": "end",
+            "required": false,
+            "type": "string",
+            "format": "date"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«UserReportVO»",
+              "originalRef": "Result«UserReportVO»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/setmeal": {
+      "post": {
+        "tags": [
+          "套餐相关接口"
+        ],
+        "summary": "新增套餐",
+        "operationId": "saveUsingPOST_4",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "setmealDTO",
+            "description": "setmealDTO",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SetmealDTO",
+              "originalRef": "SetmealDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "套餐相关接口"
+        ],
+        "summary": "修改套餐",
+        "operationId": "updateUsingPUT_3",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "setmealDTO",
+            "description": "setmealDTO",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/SetmealDTO",
+              "originalRef": "SetmealDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "套餐相关接口"
+        ],
+        "summary": "批量删除套餐",
+        "operationId": "deleteUsingDELETE_1",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "query",
+            "description": "ids",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/admin/setmeal/list": {
+      "get": {
+        "tags": [
+          "套餐相关接口"
+        ],
+        "summary": "根据分类id查询套餐",
+        "operationId": "listUsingGET_7",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "categoryId",
+            "in": "query",
+            "description": "categoryId",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«List«Setmeal»»",
+              "originalRef": "Result«List«Setmeal»»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/setmeal/page": {
+      "get": {
+        "tags": [
+          "套餐相关接口"
+        ],
+        "summary": "套餐分页查询",
+        "operationId": "pageUsingGET_3",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "categoryId",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«PageResult»",
+              "originalRef": "Result«PageResult»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/setmeal/status/{status}": {
+      "post": {
+        "tags": [
+          "套餐相关接口"
+        ],
+        "summary": "套餐起售停售",
+        "operationId": "startOrStopUsingPOST_3",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "status",
+            "in": "path",
+            "description": "status",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/setmeal/{id}": {
+      "get": {
+        "tags": [
+          "套餐相关接口"
+        ],
+        "summary": "根据id查询套餐",
+        "operationId": "getByIdUsingGET_3",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«SetmealVO»",
+              "originalRef": "Result«SetmealVO»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/shop/status": {
+      "get": {
+        "tags": [
+          "商铺相关接口"
+        ],
+        "summary": "获取店铺营业状态",
+        "operationId": "getStatusUsingGET_1",
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«int»",
+              "originalRef": "Result«int»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/shop/{status}": {
+      "put": {
+        "tags": [
+          "商铺相关接口"
+        ],
+        "summary": "设置店铺营业状态",
+        "operationId": "setStatusUsingPUT",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "path",
+            "description": "status",
+            "required": true,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result",
+              "originalRef": "Result"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/workspace/businessData": {
+      "get": {
+        "tags": [
+          "workspace-controller"
+        ],
+        "summary": "businessData",
+        "operationId": "businessDataUsingGET",
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«BusinessDataVO»",
+              "originalRef": "Result«BusinessDataVO»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/workspace/overviewDishes": {
+      "get": {
+        "tags": [
+          "workspace-controller"
+        ],
+        "summary": "dishes",
+        "operationId": "dishesUsingGET",
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«DishOverViewVO»",
+              "originalRef": "Result«DishOverViewVO»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/workspace/overviewOrders": {
+      "get": {
+        "tags": [
+          "workspace-controller"
+        ],
+        "summary": "orders",
+        "operationId": "ordersUsingGET_1",
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«OrderOverViewVO»",
+              "originalRef": "Result«OrderOverViewVO»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/admin/workspace/overviewSetmeals": {
+      "get": {
+        "tags": [
+          "workspace-controller"
+        ],
+        "summary": "setmeals",
+        "operationId": "setmealsUsingGET",
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«SetmealOverViewVO»",
+              "originalRef": "Result«SetmealOverViewVO»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/user/addressBook": {
+      "post": {
+        "tags": [
+          "C端地址簿接口"
+        ],
+        "summary": "新增地址",
+        "operationId": "saveUsingPOST",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "addressBook",
+            "description": "addressBook",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AddressBook",
+              "originalRef": "AddressBook"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result",
+              "originalRef": "Result"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "C端地址簿接口"
+        ],
+        "summary": "根据id修改地址",
+        "operationId": "updateUsingPUT",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "addressBook",
+            "description": "addressBook",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AddressBook",
+              "originalRef": "AddressBook"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result",
+              "originalRef": "Result"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "C端地址簿接口"
+        ],
+        "summary": "根据id删除地址",
+        "operationId": "deleteByIdUsingDELETE",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "id",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result",
+              "originalRef": "Result"
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/user/addressBook/default": {
+      "get": {
+        "tags": [
+          "C端地址簿接口"
+        ],
+        "summary": "查询默认地址",
+        "operationId": "getDefaultUsingGET",
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«AddressBook»",
+              "originalRef": "Result«AddressBook»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "C端地址簿接口"
+        ],
+        "summary": "设置默认地址",
+        "operationId": "setDefaultUsingPUT",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "addressBook",
+            "description": "addressBook",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/AddressBook",
+              "originalRef": "AddressBook"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result",
+              "originalRef": "Result"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/user/addressBook/list": {
+      "get": {
+        "tags": [
+          "C端地址簿接口"
+        ],
+        "summary": "查询当前登录用户的所有地址信息",
+        "operationId": "listUsingGET",
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«List«AddressBook»»",
+              "originalRef": "Result«List«AddressBook»»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/user/addressBook/{id}": {
+      "get": {
+        "tags": [
+          "C端地址簿接口"
+        ],
+        "summary": "根据id查询地址",
+        "operationId": "getByIdUsingGET",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«AddressBook»",
+              "originalRef": "Result«AddressBook»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/user/category/list": {
+      "get": {
+        "tags": [
+          "C端-分类接口"
+        ],
+        "summary": "查询分类",
+        "operationId": "listUsingGET_1",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "description": "type",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«List«Category»»",
+              "originalRef": "Result«List«Category»»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/user/dish/list": {
+      "get": {
+        "tags": [
+          "C端-菜品浏览接口"
+        ],
+        "summary": "根据分类id查询菜品",
+        "operationId": "listUsingGET_2",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "categoryId",
+            "in": "query",
+            "description": "categoryId",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«List«DishVO»»",
+              "originalRef": "Result«List«DishVO»»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/user/order/cancel/{id}": {
+      "put": {
+        "tags": [
+          "用户端订单接口"
+        ],
+        "summary": "取消订单",
+        "operationId": "cancelUsingPUT",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/user/order/historyOrders": {
+      "get": {
+        "tags": [
+          "用户端订单接口"
+        ],
+        "summary": "查询历史订单",
+        "operationId": "historyOrdersUsingGET",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "page",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "pageSize",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "description": "status",
+            "required": false,
+            "type": "integer",
+            "format": "int32"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«PageResult»",
+              "originalRef": "Result«PageResult»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/user/order/orderDetail/{id}": {
+      "get": {
+        "tags": [
+          "用户端订单接口"
+        ],
+        "summary": "查询订单详情",
+        "operationId": "detailsUsingGET",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«OrderVO»",
+              "originalRef": "Result«OrderVO»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/user/order/payment": {
+      "put": {
+        "tags": [
+          "用户端订单接口"
+        ],
+        "summary": "订单支付（本地模拟）",
+        "operationId": "paymentUsingPUT",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "ordersPaymentDTO",
+            "description": "ordersPaymentDTO",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OrdersPaymentDTO",
+              "originalRef": "OrdersPaymentDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/user/order/reminder/{id}": {
+      "get": {
+        "tags": [
+          "用户端订单接口"
+        ],
+        "summary": "客户催单",
+        "operationId": "reminderUsingGET",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/user/order/repetition/{id}": {
+      "post": {
+        "tags": [
+          "用户端订单接口"
+        ],
+        "summary": "再来一单",
+        "operationId": "repetitionUsingPOST",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/user/order/submit": {
+      "post": {
+        "tags": [
+          "用户端订单接口"
+        ],
+        "summary": "用户下单",
+        "operationId": "submitUsingPOST",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "ordersSubmitDTO",
+            "description": "ordersSubmitDTO",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/OrdersSubmitDTO",
+              "originalRef": "OrdersSubmitDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«OrderSubmitVO»",
+              "originalRef": "Result«OrderSubmitVO»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/user/setmeal/dish/{id}": {
+      "get": {
+        "tags": [
+          "C端-套餐浏览接口"
+        ],
+        "summary": "根据套餐id查询包含的菜品列表",
+        "operationId": "dishListUsingGET",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "id",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«List«DishItemVO»»",
+              "originalRef": "Result«List«DishItemVO»»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/user/setmeal/list": {
+      "get": {
+        "tags": [
+          "C端-套餐浏览接口"
+        ],
+        "summary": "根据分类id查询套餐",
+        "operationId": "listUsingGET_3",
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "name": "categoryId",
+            "in": "query",
+            "description": "categoryId",
+            "required": false,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«List«Setmeal»»",
+              "originalRef": "Result«List«Setmeal»»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/user/shop/status": {
+      "get": {
+        "tags": [
+          "商铺相关接口"
+        ],
+        "summary": "获取店铺营业状态",
+        "operationId": "getStatusUsingGET",
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«int»",
+              "originalRef": "Result«int»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/user/shoppingCart/add": {
+      "post": {
+        "tags": [
+          "用户端购物车接口"
+        ],
+        "summary": "添加购物车",
+        "operationId": "addUsingPOST",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "shoppingCartDTO",
+            "description": "shoppingCartDTO",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ShoppingCartDTO",
+              "originalRef": "ShoppingCartDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/user/shoppingCart/clean": {
+      "delete": {
+        "tags": [
+          "用户端购物车接口"
+        ],
+        "summary": "清空购物车",
+        "operationId": "cleanUsingDELETE",
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/user/shoppingCart/list": {
+      "get": {
+        "tags": [
+          "用户端购物车接口"
+        ],
+        "summary": "查看购物车",
+        "operationId": "listUsingGET_4",
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«List«ShoppingCart»»",
+              "originalRef": "Result«List«ShoppingCart»»"
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/user/shoppingCart/sub": {
+      "post": {
+        "tags": [
+          "用户端购物车接口"
+        ],
+        "summary": "减少购物车商品",
+        "operationId": "subUsingPOST",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "shoppingCartDTO",
+            "description": "shoppingCartDTO",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/ShoppingCartDTO",
+              "originalRef": "ShoppingCartDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/user/user/login": {
+      "post": {
+        "tags": [
+          "C端用户相关接口"
+        ],
+        "summary": "微信登陆",
+        "operationId": "loginUsingPOST",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "userLoginDTO",
+            "description": "userLoginDTO",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UserLoginDTO",
+              "originalRef": "UserLoginDTO"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«UserLoginVO»",
+              "originalRef": "Result«UserLoginVO»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/user/user/logout": {
+      "post": {
+        "tags": [
+          "C端用户相关接口"
+        ],
+        "summary": "退出登录",
+        "operationId": "logoutUsingPOST",
+        "consumes": [
+          "application/json"
+        ],
+        "produces": [
+          "*/*"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/Result«string»",
+              "originalRef": "Result«string»"
+            }
+          },
+          "201": {
+            "description": "Created"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/notify/paySuccess": {
+      "post": {
+        "tags": [
+          "支付回调"
+        ],
+        "summary": "微信支付成功回调",
+        "consumes": [
+          "application/json"
+        ],
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "回调处理结果"
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "AdminAiChatRequestDTO": {
+      "type": "object",
+      "properties": {
+        "context": {
+          "type": "object"
+        },
+        "message": {
+          "type": "string"
+        },
+        "sessionId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "AdminAiChatRequestDTO"
+    },
+    "BusinessDataVO": {
+      "type": "object",
+      "properties": {
+        "newUsers": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "orderCompletionRate": {
+          "type": "number",
+          "format": "double"
+        },
+        "turnover": {
+          "type": "number",
+          "format": "double"
+        },
+        "unitPrice": {
+          "type": "number",
+          "format": "double"
+        },
+        "validOrderCount": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "BusinessDataVO"
+    },
+    "Category": {
+      "type": "object",
+      "properties": {
+        "createTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createUser": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "sort": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "type": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updateTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updateUser": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "Category"
+    },
+    "CategoryDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "sort": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "type": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "CategoryDTO"
+    },
+    "Dish": {
+      "type": "object",
+      "properties": {
+        "categoryId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "createTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createUser": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "image": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "price": {
+          "type": "number"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updateTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updateUser": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "Dish"
+    },
+    "DishDTO": {
+      "type": "object",
+      "properties": {
+        "categoryId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "description": {
+          "type": "string"
+        },
+        "flavors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DishFlavor",
+            "originalRef": "DishFlavor"
+          }
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "image": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "price": {
+          "type": "number"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "DishDTO"
+    },
+    "DishFlavor": {
+      "type": "object",
+      "properties": {
+        "dishId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      },
+      "title": "DishFlavor"
+    },
+    "DishOverViewVO": {
+      "type": "object",
+      "properties": {
+        "discontinued": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "sold": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "DishOverViewVO"
+    },
+    "DishVO": {
+      "type": "object",
+      "properties": {
+        "categoryId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "categoryName": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "flavors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DishFlavor",
+            "originalRef": "DishFlavor"
+          }
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "image": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "price": {
+          "type": "number"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updateTime": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "title": "DishVO"
+    },
+    "Employee": {
+      "type": "object",
+      "properties": {
+        "createTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createUser": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "idNumber": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "sex": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updateTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updateUser": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "username": {
+          "type": "string"
+        }
+      },
+      "title": "Employee"
+    },
+    "EmployeeDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "idNumber": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "sex": {
+          "type": "string"
+        },
+        "username": {
+          "type": "string"
+        }
+      },
+      "title": "EmployeeDTO"
+    },
+    "EmployeeLoginDTO": {
+      "type": "object",
+      "properties": {
+        "password": {
+          "type": "string",
+          "description": "密码"
+        },
+        "username": {
+          "type": "string",
+          "description": "用户名"
+        }
+      },
+      "title": "EmployeeLoginDTO",
+      "description": "员工登录时传递的数据模型"
+    },
+    "EmployeeLoginVO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64",
+          "description": "主键值"
+        },
+        "name": {
+          "type": "string",
+          "description": "姓名"
+        },
+        "token": {
+          "type": "string",
+          "description": "jwt令牌"
+        },
+        "userName": {
+          "type": "string",
+          "description": "用户名"
+        }
+      },
+      "title": "EmployeeLoginVO",
+      "description": "员工登录返回的数据格式"
+    },
+    "OrderDetail": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "dishFlavor": {
+          "type": "string"
+        },
+        "dishId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "image": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "number": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "orderId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "setmealId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "OrderDetail"
+    },
+    "OrderOverViewVO": {
+      "type": "object",
+      "properties": {
+        "allOrders": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "cancelledOrders": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "completedOrders": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "deliveredOrders": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "waitingOrders": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "OrderOverViewVO"
+    },
+    "OrderReportVO": {
+      "type": "object",
+      "properties": {
+        "dateList": {
+          "type": "string"
+        },
+        "orderCompletionRate": {
+          "type": "number",
+          "format": "double"
+        },
+        "orderCountList": {
+          "type": "string"
+        },
+        "totalOrderCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "validOrderCount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "validOrderCountList": {
+          "type": "string"
+        }
+      },
+      "title": "OrderReportVO"
+    },
+    "OrderStatisticsVO": {
+      "type": "object",
+      "properties": {
+        "confirmed": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "deliveryInProgress": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "toBeConfirmed": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "OrderStatisticsVO"
+    },
+    "OrderVO": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "addressBookId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "cancelReason": {
+          "type": "string"
+        },
+        "cancelTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "checkoutTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "consignee": {
+          "type": "string"
+        },
+        "deliveryStatus": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "deliveryTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "estimatedDeliveryTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "number": {
+          "type": "string"
+        },
+        "orderDetailList": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OrderDetail",
+            "originalRef": "OrderDetail"
+          }
+        },
+        "orderDishes": {
+          "type": "string"
+        },
+        "orderTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "packAmount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "payMethod": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "payStatus": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "rejectionReason": {
+          "type": "string"
+        },
+        "remark": {
+          "type": "string"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "tablewareNumber": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "tablewareStatus": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userName": {
+          "type": "string"
+        }
+      },
+      "title": "OrderVO"
+    },
+    "OrdersCancelDTO": {
+      "type": "object",
+      "properties": {
+        "cancelReason": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "OrdersCancelDTO"
+    },
+    "OrdersConfirmDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "OrdersConfirmDTO"
+    },
+    "OrdersRejectionDTO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "rejectionReason": {
+          "type": "string"
+        }
+      },
+      "title": "OrdersRejectionDTO"
+    },
+    "PageResult": {
+      "type": "object",
+      "properties": {
+        "records": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "total": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "PageResult"
+    },
+    "PasswordEditDTO": {
+      "type": "object",
+      "properties": {
+        "empId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "newPassword": {
+          "type": "string"
+        },
+        "oldPassword": {
+          "type": "string"
+        }
+      },
+      "title": "PasswordEditDTO"
+    },
+    "Result": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "type": "object"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result"
+    },
+    "Result«BusinessDataVO»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "$ref": "#/definitions/BusinessDataVO",
+          "originalRef": "BusinessDataVO"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«BusinessDataVO»"
+    },
+    "Result«DishDTO»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "$ref": "#/definitions/DishDTO",
+          "originalRef": "DishDTO"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«DishDTO»"
+    },
+    "Result«DishOverViewVO»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "$ref": "#/definitions/DishOverViewVO",
+          "originalRef": "DishOverViewVO"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«DishOverViewVO»"
+    },
+    "Result«DishVO»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "$ref": "#/definitions/DishVO",
+          "originalRef": "DishVO"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«DishVO»"
+    },
+    "Result«EmployeeLoginVO»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "$ref": "#/definitions/EmployeeLoginVO",
+          "originalRef": "EmployeeLoginVO"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«EmployeeLoginVO»"
+    },
+    "Result«Employee»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "$ref": "#/definitions/Employee",
+          "originalRef": "Employee"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«Employee»"
+    },
+    "Result«List«Category»»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Category",
+            "originalRef": "Category"
+          }
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«List«Category»»"
+    },
+    "Result«List«Dish»»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Dish",
+            "originalRef": "Dish"
+          }
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«List«Dish»»"
+    },
+    "Result«List«Setmeal»»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Setmeal",
+            "originalRef": "Setmeal"
+          }
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«List«Setmeal»»"
+    },
+    "Result«Map«string,object»»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "type": "object"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«Map«string,object»»"
+    },
+    "Result«OrderOverViewVO»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "$ref": "#/definitions/OrderOverViewVO",
+          "originalRef": "OrderOverViewVO"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«OrderOverViewVO»"
+    },
+    "Result«OrderReportVO»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "$ref": "#/definitions/OrderReportVO",
+          "originalRef": "OrderReportVO"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«OrderReportVO»"
+    },
+    "Result«OrderStatisticsVO»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "$ref": "#/definitions/OrderStatisticsVO",
+          "originalRef": "OrderStatisticsVO"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«OrderStatisticsVO»"
+    },
+    "Result«OrderVO»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "$ref": "#/definitions/OrderVO",
+          "originalRef": "OrderVO"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«OrderVO»"
+    },
+    "Result«PageResult»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "$ref": "#/definitions/PageResult",
+          "originalRef": "PageResult"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«PageResult»"
+    },
+    "Result«SalesTop10ReportVO»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "$ref": "#/definitions/SalesTop10ReportVO",
+          "originalRef": "SalesTop10ReportVO"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«SalesTop10ReportVO»"
+    },
+    "Result«SetmealOverViewVO»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "$ref": "#/definitions/SetmealOverViewVO",
+          "originalRef": "SetmealOverViewVO"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«SetmealOverViewVO»"
+    },
+    "Result«SetmealVO»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "$ref": "#/definitions/SetmealVO",
+          "originalRef": "SetmealVO"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«SetmealVO»"
+    },
+    "Result«TurnoverReportVO»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "$ref": "#/definitions/TurnoverReportVO",
+          "originalRef": "TurnoverReportVO"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«TurnoverReportVO»"
+    },
+    "Result«UserReportVO»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "$ref": "#/definitions/UserReportVO",
+          "originalRef": "UserReportVO"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«UserReportVO»"
+    },
+    "Result«int»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«int»"
+    },
+    "Result«string»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "type": "string"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«string»"
+    },
+    "SalesTop10ReportVO": {
+      "type": "object",
+      "properties": {
+        "nameList": {
+          "type": "string"
+        },
+        "numberList": {
+          "type": "string"
+        }
+      },
+      "title": "SalesTop10ReportVO"
+    },
+    "Setmeal": {
+      "type": "object",
+      "properties": {
+        "categoryId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "createTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createUser": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "image": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "price": {
+          "type": "number"
+        },
+        "status": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updateTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updateUser": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "Setmeal"
+    },
+    "SetmealDTO": {
+      "type": "object",
+      "properties": {
+        "categoryId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "image": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "price": {
+          "type": "number"
+        },
+        "setmealDishes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SetmealDish",
+            "originalRef": "SetmealDish"
+          }
+        },
+        "status": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "SetmealDTO"
+    },
+    "SetmealDish": {
+      "type": "object",
+      "properties": {
+        "copies": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "dishId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "price": {
+          "type": "number"
+        },
+        "setmealId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "SetmealDish"
+    },
+    "SetmealOverViewVO": {
+      "type": "object",
+      "properties": {
+        "discontinued": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "sold": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "SetmealOverViewVO"
+    },
+    "SetmealVO": {
+      "type": "object",
+      "properties": {
+        "categoryId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "categoryName": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "image": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "price": {
+          "type": "number"
+        },
+        "setmealDishes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/SetmealDish",
+            "originalRef": "SetmealDish"
+          }
+        },
+        "status": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "updateTime": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "title": "SetmealVO"
+    },
+    "SseEmitter": {
+      "type": "object",
+      "properties": {
+        "timeout": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "SseEmitter"
+    },
+    "TurnoverReportVO": {
+      "type": "object",
+      "properties": {
+        "dateList": {
+          "type": "string"
+        },
+        "turnoverList": {
+          "type": "string"
+        }
+      },
+      "title": "TurnoverReportVO"
+    },
+    "UserReportVO": {
+      "type": "object",
+      "properties": {
+        "dateList": {
+          "type": "string"
+        },
+        "newUserList": {
+          "type": "string"
+        },
+        "totalUserList": {
+          "type": "string"
+        }
+      },
+      "title": "UserReportVO"
+    },
+    "AddressBook": {
+      "type": "object",
+      "properties": {
+        "cityCode": {
+          "type": "string"
+        },
+        "cityName": {
+          "type": "string"
+        },
+        "consignee": {
+          "type": "string"
+        },
+        "detail": {
+          "type": "string"
+        },
+        "districtCode": {
+          "type": "string"
+        },
+        "districtName": {
+          "type": "string"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isDefault": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "label": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "provinceCode": {
+          "type": "string"
+        },
+        "provinceName": {
+          "type": "string"
+        },
+        "sex": {
+          "type": "string"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "AddressBook"
+    },
+    "DishItemVO": {
+      "type": "object",
+      "properties": {
+        "copies": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "description": {
+          "type": "string"
+        },
+        "image": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "title": "DishItemVO"
+    },
+    "OrderSubmitVO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "orderAmount": {
+          "type": "number"
+        },
+        "orderNumber": {
+          "type": "string"
+        },
+        "orderTime": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "title": "OrderSubmitVO"
+    },
+    "OrdersPaymentDTO": {
+      "type": "object",
+      "properties": {
+        "orderNumber": {
+          "type": "string"
+        },
+        "payMethod": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "OrdersPaymentDTO"
+    },
+    "OrdersSubmitDTO": {
+      "type": "object",
+      "properties": {
+        "addressBookId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "deliveryStatus": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "estimatedDeliveryTime": {
+          "type": "string",
+          "example": "yyyy-MM-dd HH:mm:ss"
+        },
+        "packAmount": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "payMethod": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "remark": {
+          "type": "string"
+        },
+        "tablewareNumber": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "tablewareStatus": {
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "title": "OrdersSubmitDTO"
+    },
+    "Result«AddressBook»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "$ref": "#/definitions/AddressBook",
+          "originalRef": "AddressBook"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«AddressBook»"
+    },
+    "Result«List«AddressBook»»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/AddressBook",
+            "originalRef": "AddressBook"
+          }
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«List«AddressBook»»"
+    },
+    "Result«List«DishItemVO»»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DishItemVO",
+            "originalRef": "DishItemVO"
+          }
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«List«DishItemVO»»"
+    },
+    "Result«List«DishVO»»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DishVO",
+            "originalRef": "DishVO"
+          }
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«List«DishVO»»"
+    },
+    "Result«List«ShoppingCart»»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ShoppingCart",
+            "originalRef": "ShoppingCart"
+          }
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«List«ShoppingCart»»"
+    },
+    "Result«OrderSubmitVO»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "$ref": "#/definitions/OrderSubmitVO",
+          "originalRef": "OrderSubmitVO"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«OrderSubmitVO»"
+    },
+    "Result«UserLoginVO»": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "data": {
+          "$ref": "#/definitions/UserLoginVO",
+          "originalRef": "UserLoginVO"
+        },
+        "msg": {
+          "type": "string"
+        }
+      },
+      "title": "Result«UserLoginVO»"
+    },
+    "ShoppingCart": {
+      "type": "object",
+      "properties": {
+        "amount": {
+          "type": "number"
+        },
+        "createTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "dishFlavor": {
+          "type": "string"
+        },
+        "dishId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "image": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "number": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "setmealId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "userId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "ShoppingCart"
+    },
+    "ShoppingCartDTO": {
+      "type": "object",
+      "properties": {
+        "dishFlavor": {
+          "type": "string"
+        },
+        "dishId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "setmealId": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "title": "ShoppingCartDTO"
+    },
+    "UserLoginDTO": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        }
+      },
+      "title": "UserLoginDTO"
+    },
+    "UserLoginVO": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "openid": {
+          "type": "string"
+        },
+        "token": {
+          "type": "string"
+        }
+      },
+      "title": "UserLoginVO"
+    }
+  },
+  "securityDefinitions": {
+    "AdminToken": {
+      "type": "apiKey",
+      "name": "token",
+      "in": "header"
+    },
+    "UserToken": {
+      "type": "apiKey",
+      "name": "authentication",
+      "in": "header"
+    }
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "pages": [{
+      "path": "pages/index/index",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "Takeout Guys"
+      }
+    },
+    {
+      "path": "pages/order/index",
+      "style": {
+        "navigationBarTitleText": "提交订单",
+        "enablePullDownRefresh": false,
+        "navigationBarBackgroundColor": "#333333"
+
+      }
+    },
+    {
+      "path": "pages/order/success",
+      "style": {
+        "navigationBarTitleText": "提交成功",
+        "enablePullDownRefresh": false,
+        "navigationBarBackgroundColor": "#333333"
+      }
+    },
+    {
+      "path": "pages/nonet/index",
+      "style": {
+        "navigationBarTitleText": "无网络"
+      }
+    }, {
+      "path": "pages/address/address",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "地址管理",
+        "enablePullDownRefresh": false,
+        "navigationBarBackgroundColor": "#333333"
+      }
+    },
+    {
+      "path": "pages/my/my",
+      "style": {
+        "navigationBarTitleText": "个人中心",
+        "enablePullDownRefresh": false,
+        "navigationBarBackgroundColor": "#101a2a",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/addOrEditAddress/addOrEditAddress",
+      "style": {
+        "navigationStyle": "custom",
+        "navigationBarTitleText": "新增收获地址",
+        "enablePullDownRefresh": false,
+        "navigationBarBackgroundColor": "#333333"
+      }
+
+    },
+    {
+      "path": "pages/historyOrder/historyOrder",
+      "style": {
+        "navigationBarTitleText": "历史订单",
+        "enablePullDownRefresh": true,
+        "navigationBarBackgroundColor": "#333333"
+
+      }
+    },
+    {
+      "path": "pages/ai/chat",
+      "style": {
+        "navigationBarTitleText": "小慧 AI 助手",
+        "navigationBarBackgroundColor": "#101a2a",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/ai/recommend",
+      "style": {
+        "navigationBarTitleText": "AI 智能推荐",
+        "navigationBarBackgroundColor": "#ff4b12",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/review/index",
+      "style": {
+        "navigationBarTitleText": "客户评价",
+        "navigationBarBackgroundColor": "#101a2a",
+        "navigationBarTextStyle": "white"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "Takeout Guys AI",
+    "navigationBarBackgroundColor": "#101a2a",
+    // "navigationBarBackground": "#E95F3C",
+    "backgroundColor": "#F8F8F8"
+  },
+  "condition": { // 模式配置，仅开发期间生效
+    "current": 0, // 当前激活的模式(list 的索引项)
+    "list": [{
+      "name": "", // 模式名称
+      "path": "", // 启动页面，必选
+      "query": "" // 启动参数，在页面的onLoad函数里面得到
+    }]
+  }
+}

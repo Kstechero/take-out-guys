@@ -1,9 +1,33 @@
+# Java / Maven
 **/target/
-.idea
-*.iml
 *.class
-*Test.java
-**/test/
-uploads/
-# 本地开发环境包含数据库、微信和 GX10 等敏感配置，仅保留在开发机器。
-sky-server/src/main/resources/application-dev.yml
+*.iml
+.idea/
+
+# JavaScript / uni-app
+**/node_modules/
+**/dist/
+**/unpackage/
+npm-debug.log*
+
+# Runtime data and local secrets
+backend/uploads/
+backend/sky-server/src/main/resources/application-dev.yml
+docs/private/
+docs/RESUME_CN_DRAFT.md
+user-app/project.private.config.json
+
+# Editors
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.history
+user-app/.hbuilderx/
+
+# Locked migration remnants; remove after closing old Vite/HBuilderX processes.
+backend/sky-take-out/
+project-rjwm-weixin-uniapp/
+.agents/
+legacy/

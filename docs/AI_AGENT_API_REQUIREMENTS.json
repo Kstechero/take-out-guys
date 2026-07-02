@@ -1,0 +1,193 @@
+{
+  "document": {
+    "name": "Takeout Guys AI Agent API Requirements",
+    "version": "1.0.0",
+    "status": "proposed",
+    "generatedAt": "2026-07-01",
+    "basePaths": ["/user/ai", "/admin/ai"],
+    "responseEnvelope": { "code": 1, "msg": null, "data": {} }
+  },
+  "llmProvider": {
+    "type": "openai-compatible-vllm",
+    "baseUrlProperty": "sky.ai.base-url",
+    "apiKeyProperty": "sky.ai.api-key",
+    "modelProperty": "sky.ai.model",
+    "model": "ornith",
+    "credentialSource": "environment-variable:GX10_AI_API_KEY",
+    "upstreamEndpoints": {
+      "models": "GET /v1/models",
+      "chat": "POST /v1/chat/completions"
+    },
+    "compatibilityNotes": [
+      "支持 Authorization: Bearer <api-key>",
+      "模型可能返回 reasoning_content，业务响应只向用户展示 content",
+      "max_tokens 建议至少 512，默认 2048",
+      "SSE 必须在客户端断开后取消上游请求"
+    ]
+  },
+  "authentication": {
+    "userHeader": "authentication",
+    "adminHeader": "token",
+    "rules": [
+      "所有订单工具必须校验订单属于当前用户",
+      "管理端 Agent 仅能读取当前管理员有权限的数据",
+      "API Key 只保存在后端，禁止返回前端"
+    ]
+  },
+  "endpoints": [
+    {
+      "id": "user-ai-chat",
+      "method": "POST",
+      "path": "/user/ai/chat",
+      "priority": "P0",
+      "summary": "非流式 AI 对话",
+      "request": {
+        "contentType": "application/json",
+        "body": {
+          "sessionId": "long|null",
+          "message": "string|required|max:2000",
+          "enableTools": "boolean|default:true"
+        }
+      },
+      "responseData": {
+        "sessionId": "long",
+        "messageId": "long",
+        "content": "string",
+        "messageType": "text|dish_cards|order_card|transfer",
+        "toolCalls": "array",
+        "usage": { "promptTokens": "integer", "completionTokens": "integer" }
+      }
+    },
+    {
+      "id": "user-ai-chat-stream",
+      "method": "POST",
+      "path": "/user/ai/chat/stream",
+      "priority": "P0",
+      "summary": "SSE 流式 AI 对话",
+      "request": {
+        "contentType": "application/json",
+        "accept": "text/event-stream",
+        "body": { "sessionId": "long|null", "message": "string|required|max:2000", "enableTools": "boolean|default:true" }
+      },
+      "events": [
+        { "event": "session", "data": { "sessionId": "long" } },
+        { "event": "delta", "data": { "content": "string" } },
+        { "event": "tool_start", "data": { "name": "string", "arguments": "object" } },
+        { "event": "tool_result", "data": { "name": "string", "result": "object" } },
+        { "event": "done", "data": { "messageId": "long", "messageType": "string" } },
+        { "event": "error", "data": { "code": "string", "message": "string" } }
+      ]
+    },
+    {
+      "id": "user-ai-recommend",
+      "method": "POST",
+      "path": "/user/ai/recommend",
+      "priority": "P0",
+      "summary": "基于真实可售菜品的智能推荐",
+      "request": { "body": { "query": "string|required", "budget": "decimal|null", "people": "integer|null", "limit": "integer|default:6|max:10" } },
+      "responseData": {
+        "items": [{ "dishId": "long", "name": "string", "image": "string", "price": "decimal", "categoryName": "string", "description": "string", "reason": "string" }]
+      },
+      "rules": ["先查询数据库可售菜品，再交给模型筛选", "返回前必须按 dishId 回查数据库", "禁止返回模型编造的菜品"]
+    },
+    {
+      "id": "user-ai-review-write",
+      "method": "POST",
+      "path": "/user/ai/review/write",
+      "priority": "P1",
+      "summary": "AI 帮写、润色、续写或精简评价",
+      "request": { "body": { "orderId": "long|required", "instruction": "string|max:500", "draft": "string|max:140", "action": "write|polish|continue|shorten" } },
+      "responseData": { "content": "string|max:140", "blocked": "boolean", "sensitiveWords": "array<string>" },
+      "rules": ["校验订单属于当前用户且已完成", "结合真实订单菜品", "生成后执行敏感词检测"]
+    },
+    {
+      "id": "user-ai-session-list",
+      "method": "GET",
+      "path": "/user/ai/session/list",
+      "priority": "P1",
+      "summary": "查询当前用户 AI 会话",
+      "query": { "page": "integer|default:1", "pageSize": "integer|default:20" },
+      "responseData": { "total": "long", "records": [{ "id": "long", "title": "string", "updateTime": "datetime", "lastMessage": "string" }] }
+    },
+    {
+      "id": "user-ai-session-messages",
+      "method": "GET",
+      "path": "/user/ai/session/{sessionId}/messages",
+      "priority": "P1",
+      "summary": "查询会话消息历史",
+      "responseData": [{ "id": "long", "role": "user|assistant|tool", "content": "string", "messageType": "string", "createTime": "datetime" }]
+    },
+    {
+      "id": "user-ai-session-delete",
+      "method": "DELETE",
+      "path": "/user/ai/session/{sessionId}",
+      "priority": "P1",
+      "summary": "删除自己的 AI 会话",
+      "responseData": null
+    },
+    {
+      "id": "admin-ai-chat-stream",
+      "implementationStatus": "implemented",
+      "method": "POST",
+      "path": "/admin/ai/chat/stream",
+      "priority": "P0",
+      "summary": "管理端运营 Agent 流式对话",
+      "request": { "contentType": "application/json", "accept": "text/event-stream", "body": { "sessionId": "long|null", "message": "string|required", "context": { "dateBegin": "date|null", "dateEnd": "date|null" } } },
+      "events": ["session", "delta", "tool_start", "tool_result", "done", "error"],
+      "allowedTools": ["businessData", "orderStatistics", "turnoverStatistics", "top10Dishes", "dishOverview", "setmealOverview"],
+      "rules": ["默认只读", "不得直接修改订单、菜品、员工或店铺状态", "引用统计数据时注明日期范围"]
+    },
+    {
+      "id": "admin-ai-health",
+      "implementationStatus": "implemented",
+      "method": "GET",
+      "path": "/admin/ai/health",
+      "priority": "P0",
+      "summary": "检查 GX10 模型服务状态",
+      "responseData": { "status": "UP|DOWN", "provider": "vllm", "model": "ornith", "latencyMs": "long", "checkedAt": "datetime" },
+      "rules": ["响应不得包含 API Key", "上游异常时返回业务状态 DOWN，不泄露内部堆栈"]
+    },
+    {
+      "id": "admin-ai-knowledge-reload",
+      "method": "POST",
+      "path": "/admin/ai/knowledge/reload",
+      "priority": "P1",
+      "summary": "重新加载并向量化 RAG 文档",
+      "request": { "body": { "scope": "all|changed", "async": "boolean|default:true" } },
+      "responseData": { "jobId": "string", "status": "QUEUED|RUNNING|DONE|FAILED" }
+    },
+    {
+      "id": "admin-ai-knowledge-status",
+      "method": "GET",
+      "path": "/admin/ai/knowledge/status/{jobId}",
+      "priority": "P1",
+      "summary": "查询知识库重建任务",
+      "responseData": { "jobId": "string", "status": "string", "processed": "integer", "total": "integer", "message": "string|null" }
+    }
+  ],
+  "internalTools": [
+    { "name": "queryAvailableDishes", "reuse": "DishService", "write": false },
+    { "name": "queryCurrentUserOrders", "reuse": "OrderService", "write": false },
+    { "name": "cancelCurrentUserOrder", "reuse": "OrderService", "write": true, "requiresConfirmation": true },
+    { "name": "queryCoupons", "reuse": "CouponService", "write": false, "dependency": "coupon module" },
+    { "name": "transferHumanService", "reuse": "CustomerService", "write": true, "dependency": "human service module" },
+    { "name": "checkSensitiveWords", "reuse": "SensitiveWordService", "write": false, "dependency": "sensitive word module" },
+    { "name": "queryBusinessReports", "reuse": "WorkspaceService+ReportService", "write": false }
+  ],
+  "errorCodes": [
+    { "code": "AI_SERVICE_UNAVAILABLE", "httpStatus": 503 },
+    { "code": "AI_REQUEST_TIMEOUT", "httpStatus": 504 },
+    { "code": "AI_CONTENT_BLOCKED", "httpStatus": 400 },
+    { "code": "AI_SESSION_NOT_FOUND", "httpStatus": 404 },
+    { "code": "AI_TOOL_FORBIDDEN", "httpStatus": 403 },
+    { "code": "AI_TOOL_FAILED", "httpStatus": 500 },
+    { "code": "AI_RATE_LIMITED", "httpStatus": 429 }
+  ],
+  "acceptance": [
+    "用户流式首字节时间小于 3 秒（局域网/模型正常情况下）",
+    "模型不可用时接口在超时后返回可识别错误，不能无限挂起",
+    "任何用户都不能查询或取消其他用户订单",
+    "推荐结果中的每个 dishId 均能在数据库中查到且状态为启售",
+    "日志记录 requestId、userId、sessionId、耗时和工具名，但不记录 API Key"
+  ]
+}
