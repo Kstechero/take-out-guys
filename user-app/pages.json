@@ -88,6 +88,14 @@
         "navigationBarBackgroundColor": "#101a2a",
         "navigationBarTextStyle": "white"
       }
+    },
+    {
+      "path": "pages/coupon/index",
+      "style": {
+        "navigationBarTitleText": "优惠券中心",
+        "navigationBarBackgroundColor": "#101a2a",
+        "navigationBarTextStyle": "white"
+      }
     }
   ],
   "globalStyle": {

@@ -1,4 +1,5 @@
 import navBar from '../common/Navbar/navbar.vue'
+import uniIcons from '../../components/uni-icons/uni-icons.vue'
 import 
 	{ 
 		openTable, 
@@ -105,7 +106,7 @@ export default {
 			return uni.getMenuButtonBoundingClientRect().top + uni.getMenuButtonBoundingClientRect().height + 7
 		}
 	},
-	components: { navBar },
+	components: { navBar, uniIcons },
 	onLoad (options) {
 		uni.onNetworkStatusChange(function(res) {
 			if (res.isConnected == false) {

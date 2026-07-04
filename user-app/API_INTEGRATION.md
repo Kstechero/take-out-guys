@@ -22,6 +22,7 @@
 | 购物车 | `POST /user/shoppingCart/add`、`POST /user/shoppingCart/sub`、`GET /user/shoppingCart/list`、`DELETE /user/shoppingCart/clean` |
 | 地址 | `/user/addressBook` 下的查询、新增、修改、删除及默认地址接口 |
 | 订单 | 提交、支付、历史订单、详情、取消、再来一单、催单 |
+| 优惠券 | `GET /user/coupon/available`、`POST /user/coupon/receive/{couponId}`、`GET /user/coupon/my`、`GET /user/coupon/order/available` |
 
 金额直接使用后端 `BigDecimal` 的元单位，前端不再除以 100。订单明细字段使用 `orderDetailList`。
 
@@ -30,10 +31,24 @@
 前端已加入 AI 对话页、智能推荐页及以下请求封装：
 
 - `POST /user/ai/chat`
+- `GET /user/ai/chat/stream`
 - `POST /user/ai/recommend`
 - `POST /user/ai/review/write`
 - `GET /user/ai/session/list`
-- `GET /user/ai/session/{sessionId}/messages`
 - `DELETE /user/ai/session/{sessionId}`
 
-这些用户端 AI 接口目前属于待实现契约，完整字段和验收规则见 `../docs/AI_AGENT_API_REQUIREMENTS.json`。在后端实现前，页面会给出明确提示，不会把 GX10 密钥放进小程序；模型密钥只能由后端保存和调用。
+当前 uni-app 已按正式 `USER_API_APIFOX.json` 对齐以下契约细节：
+
+- AI 对话请求体使用 `{ sessionId?, message }`
+- AI 推荐请求体使用 `{ requirement, budget?, peopleCount? }`
+- AI 评价帮写请求体使用 `{ orderId, dishId?, rating?, keywords?, draft?, style? }`
+- 用户评价提交流程已改为 `{ orderId, dishId, rating, content, images }`
+
+这些用户端 AI 接口目前尚未由后端完整实现，因此页面在失败时会明确提示，不会伪造成功结果，也不会把 GX10 密钥放进小程序；模型密钥只能由后端保存和调用。
+
+## 优惠券页面接入说明
+
+- 个人中心已新增“优惠券中心”入口，对接可领取优惠券和我的优惠券查询；
+- 订单页已新增“优惠券”入口，对接当前订单可用券查询与选择；
+- 由于当前真实后端 `OrdersSubmitDTO` 还没有 `couponId` 字段，下单时暂不能真正完成优惠券核销；
+- 前端会回填已选择的优惠券，并明确提示“当前下单接口暂未完成优惠券核销”，避免把前端预选误当成已抵扣成功。

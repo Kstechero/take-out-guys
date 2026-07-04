@@ -11,12 +11,16 @@
 		// 提交订单
 		submitOrderSubmit,
 		// 查询默认地址
-		getAddressBookDefault
+		getAddressBookDefault,
+		getOrderAvailableCoupons
 	} from '../api/api.js'
 	import initWebScoket from '../../utils/webscoket'
-	import {mapState, mapMutations, mapActions} from 'vuex'
-	import { baseUrl } from '../../utils/env'
-	import { getPlatform } from '../../utils/system.js'
+import {mapState, mapMutations, mapActions} from 'vuex'
+import { baseUrl } from '../../utils/env'
+import { getPlatform } from '../../utils/system.js'
+import uniIcons from '../../components/uni-icons/uni-icons.vue'
+
+	const ORDER_COUPON_STORAGE_KEY = 'order_selected_coupon'
 	
 	export default {
 		data () {
@@ -34,6 +38,8 @@
 				addressBookId: '',
 				// 加入购物车数量
 				orderDishNumber: 0,
+				selectedCoupon: null,
+				availableCouponCount: 0,
 			}
 		},
 		computed: {
@@ -43,9 +49,28 @@
 			orderListDataes: function () {
 				return this.orderListData()
 				// return this.orderListData().dishList
+			},
+			originalPayableAmount () {
+				return Number((this.orderDishPrice + 6).toFixed(2))
+			},
+			couponDiscountAmount () {
+				if (!this.selectedCoupon || this.selectedCoupon.discountAmount == null) return 0
+				return Math.min(Number(this.selectedCoupon.discountAmount) || 0, this.originalPayableAmount)
+			},
+			payableAmount () {
+				return Number(Math.max(0, this.originalPayableAmount - this.couponDiscountAmount).toFixed(2))
+			},
+			couponHint () {
+				if (this.selectedCoupon) return '已选择优惠券'
+				if (this.availableCouponCount > 0) return `${this.availableCouponCount} 张可用`
+				return '暂无可用优惠券'
+			},
+			couponValueText () {
+				if (!this.selectedCoupon) return '去看看'
+				return `${this.selectedCoupon.name || '已选优惠券'} · ${this.couponDiscountText(this.selectedCoupon)}`
 			}
 		},
-		// components: { uniNavBar },
+		components: { uniIcons },
 		onLoad (options) {
 			this.initPlatform()
 			this.psersonUrl = this.$store.state.baseUserInfo && this.$store.state.baseUserInfo.avatarUrl
@@ -67,6 +92,10 @@
 			
 			// 默认地址查询
 			this.getAddressBookDefault()
+		},
+		onShow () {
+			this.syncSelectedCoupon()
+			this.loadOrderCoupons()
 		},
 		methods: {
 			...mapState(['shopInfo', 'orderListData']),
@@ -115,13 +144,42 @@
 			},
 			// 订单里和总订单价格计算
 			computOrderInfo () {
-				let oriData = this.orderListDataes
+				let oriData = this.orderListDataes || []
 				this.orderDishNumber = this.orderDishPrice = 0
 				this.orderDishPrice = 0
 				oriData.map((n,i) => {
 					// this.orderDishPrice += n.number * n.price
 					this.orderDishPrice += n.number * n.amount
 					this.orderDishNumber += n.number
+				})
+				this.loadOrderCoupons()
+			},
+			syncSelectedCoupon () {
+				this.selectedCoupon = uni.getStorageSync(ORDER_COUPON_STORAGE_KEY) || null
+			},
+			extractCouponList (data) {
+				if (Array.isArray(data)) return data
+				if (Array.isArray(data?.records)) return data.records
+				if (Array.isArray(data?.items)) return data.items
+				return []
+			},
+			couponDiscountText (coupon) {
+				if (!coupon) return ''
+				if (coupon.discountAmount != null) return `减${coupon.discountAmount}元`
+				if (coupon.discountRate != null) return `${Number(coupon.discountRate) * 10}折`
+				return '优惠券'
+			},
+			loadOrderCoupons () {
+				if (!this.payableAmount) return
+				getOrderAvailableCoupons({ amount: this.originalPayableAmount }).then(res => {
+					this.availableCouponCount = this.extractCouponList(res.data).length
+				}).catch(() => {
+					this.availableCouponCount = 0
+				})
+			},
+			goCouponPage () {
+				uni.navigateTo({
+					url: `/pages/coupon/index?mode=order&amount=${this.originalPayableAmount}`
 				})
 			},
 			// 返回上一级
@@ -148,10 +206,12 @@
 					tablewareStatus: 1,
 					tablewareNumber: 0,
 					packAmount: 0,
-					amount: this.orderDishPrice + 6
+					amount: this.originalPayableAmount,
+					couponId: this.selectedCoupon && this.selectedCoupon.id ? this.selectedCoupon.id : undefined
 				}
 				submitOrderSubmit(params).then(async res => {
 					if (res.code === 1) {
+						uni.removeStorageSync(ORDER_COUPON_STORAGE_KEY)
 						await payOrder({ orderNumber: res.data.orderNumber, payMethod: 1 })
 						uni.redirectTo({
 							url: '/pages/order/success'

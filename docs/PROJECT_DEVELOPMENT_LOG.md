@@ -1,4 +1,4 @@
-# Takeout Guys AI 项目开发记录
+﻿# Takeout Guys AI 项目开发记录
 
 > 当前统一仓库结构：`backend/` 为 Spring Boot 后端，`admin-web/` 为管理端，`user-app/` 为小程序，接口与维护文档统一放在 `docs/`。
 
@@ -95,7 +95,7 @@ sky-server
 - 最大上下文：262144；
 - 认证方式：`Authorization: Bearer <api-key>`。
 
-当前没有在 Java 工程中加入 LangChain4j、Spring AI 或其他 AI SDK。管理端 GX10 流式对话和健康检查已使用 Java `HttpURLConnection` 实现；Tool Calling、会话持久化和 RAG 仍待实现。
+当前没有在 Java 工程中加入 LangChain4j、Spring AI 或其他 AI SDK。管理端和用户端 GX10 对话、健康检查与 Tool Calling 已使用 Java `HttpURLConnection` 和统一的 `AiToolCallingClient` 实现；AI 会话持久化和 RAG 仍待实现。
 
 ## 4. 重要架构决策
 
@@ -190,16 +190,30 @@ AI Agent 不直接操作 Mapper 或数据库。订单查询、订单取消、菜
 - 敏感词管理入口；
 - 人工客服工作台入口。
 
-### 5.3 仅有前端入口、后端尚未完成
+### 5.3 已接通的用户端 AI 能力
+
+- `POST /user/ai/chat` 非流式对话；
+- `GET /user/ai/chat/stream` SSE 流式对话；
+- `GET /user/ai/session/list` 会话列表；
+- `DELETE /user/ai/session/{sessionId}` 删除会话；
+- 店铺营业状态查询；
+- 地址列表、地址详情、默认地址查询；
+- 地址新增、修改、删除和设为默认；
+- 我的优惠券、可领取优惠券、订单可用优惠券查询；
+- 领券；
+- 购物车查询、加购、减购和清空；
+- 历史订单查询、订单详情查询；
+- 取消订单、再来一单和催单；
+- 菜品与套餐搜索。
+
+### 5.4 仅有前端入口、后端尚未完成
 
 - 优惠券；
 - 菜品评价；
 - 敏感词；
 - 人工客服；
-- 用户端 AI Agent 对话；
 - AI 推荐；
 - AI 评价帮写；
-- AI 会话管理；
 - RAG 知识库。
 
 这些页面不得使用模拟数据表示已完成，应展示明确的待实现状态。
@@ -207,6 +221,11 @@ AI Agent 不直接操作 Mapper 或数据库。订单查询、订单取消、菜
 ## 6. 已接入的后端接口
 
 ```text
+POST /user/ai/chat
+GET  /user/ai/chat/stream
+GET  /user/ai/session/list
+DELETE /user/ai/session/{sessionId}
+
 POST /admin/employee/login
 POST /admin/employee/logout
 GET  /admin/employee/page
@@ -378,14 +397,11 @@ Get-Content -Raw -Encoding UTF8 AI_AGENT_API_REQUIREMENTS.json | ConvertFrom-Jso
 
 ### P0
 
-1. 实现 GX10 OpenAI Compatible HTTP 客户端；
-2. 实现 `/user/ai/chat`；
-3. 实现 `/user/ai/chat/stream`；
-4. 实现 `/admin/ai/chat/stream`；
-5. 实现 `/admin/ai/health`；
-6. 实现菜品查询、订单查询和安全取消 Tool；
-7. 校验所有 AI 订单操作的用户归属；
-8. 完善菜品、套餐和员工新增表单。
+1. AI 会话和消息持久化；
+2. RAG 知识库；
+3. AI 推荐结果回查与正式业务闭环；
+4. 同步更新 `USER_API_APIFOX.json` 与 `ADMIN_API_APIFOX.json` 中新增 AI tool calling 契约；
+5. 完善套餐新增表单和套餐菜品组合表单。
 
 ### P1
 
@@ -401,7 +417,7 @@ Get-Content -Raw -Encoding UTF8 AI_AGENT_API_REQUIREMENTS.json | ConvertFrom-Jso
 
 ### 已知限制
 
-- 管理端 AI 页面已有前端协议，但后端接口未实现；
+- 用户端与管理端 AI 会话当前仅保存在服务进程内存中，多实例部署下不会共享；
 - GX10 推理模型可能返回 `reasoning_content`，最终用户响应只应展示 `content`；
 - 推理模型使用过小的 `max_tokens` 可能在正文生成前以 `length` 结束；
 - `gx10.txt` 含明文凭据，存在安全风险；
@@ -530,3 +546,23 @@ Get-Content -Raw -Encoding UTF8 AI_AGENT_API_REQUIREMENTS.json | ConvertFrom-Jso
 - 改动：将 GitHub 仓库提升到项目根目录；后端统一到 `backend/`，管理端移动到 `admin-web/`，用户端移动到 `user-app/`，文档集中到 `docs/`，旧项目归档到 `legacy/`；用户端原 Git 历史备份在主仓库 `.git/user-app-history`；
 - 方法：保留当前 GitHub remote 和 main 分支，通过 Git rename 检测保留后端历史；统一根 `.gitignore`，排除构建产物、本地密钥、旧工程与迁移锁定残留；
 - 后续：关闭旧 Vite/HBuilderX 进程后，可删除空的 `backend/sky-take-out/` 与 `project-rjwm-weixin-uniapp/` 残留目录。
+
+### 2026-07-05 · 管理端 AI 仅保留 LLM 对话与 Tool Calling 主链路
+
+- 范围：后端 AI、文档；
+- 问题：`AdminAiChatServiceImpl` 仍混有固定回答、关键词触发分支和旧的直连流式路径；部分文档仍把管理端 Tool Calling 写成“未完成”，且工具输出依赖格式化字符串，列表查询也容易被默认分页限制；
+- 改动：移除管理端 AI 中遗留的固定回答、关键词触发和旧流式分支，只保留基于 `AiToolCallingClient` 的 LLM 对话与 Tool Calling 主链路；工具返回值统一调整为结构化 JSON；`query_orders`、`query_coupons`、`query_goods` 增加 `all=true`，后端自动分页抓取全量结果，避免模型只能看到默认第一页；同步更新 `docs/agent.md` 与 `docs/SKY_TAKE_OUT_FULL_PROJECT_README.md` 的能力边界说明；
+- 方法：`/admin/ai/chat/stream` 统一经由 `completeWithTools` 执行，由模型从 `get_shop_status`、`set_shop_status`、`query_orders`、`update_order`、`query_coupons`、`query_goods`、`get_business_overview`、`get_business_trend` 中自主选用；经营概览、趋势、菜品、优惠券、订单等工具均直接向 LLM 返回原始结构化数据，减少格式化摘要耦合；
+- 文件：`backend/sky-server/src/main/java/com/sky/service/impl/AdminAiChatServiceImpl.java`、`docs/PROJECT_DEVELOPMENT_LOG.md`、`docs/agent.md`、`docs/SKY_TAKE_OUT_FULL_PROJECT_README.md`；
+- 验证：`mvn compile -DskipTests` 通过；
+- 后续：会话持久化与 RAG 仍未实现。
+
+### 2026-07-05 · 管理端与用户端 AI Tool Calling 统一重构
+
+- 范围：后端 AI、文档；
+- 问题：`AdminAiChatServiceImpl` 与 `UserAiChatServiceImpl` 都承载了会话管理、工具定义、参数解析、工具执行和 SSE 编排，单类体积过大且难以维护；用户端 AI 虽有对话入口，但仍混有关键词分支、自然语言格式化和旧实现路径；
+- 改动：将管理端和用户端 AI 服务都重构为统一的四层结构：`ServiceImpl` 只保留对话编排，`ToolRegistry` 维护工具 schema，`ToolExecutor` 负责业务工具执行，`SessionManager` 负责内存会话；用户端正式接入结构化 JSON Tool Calling，覆盖店铺状态、地址、优惠券、购物车、订单和菜单搜索能力；所有变更类工具统一要求 `confirmed=true`；
+- 方法：两端统一复用 `AiToolCallingClient` 与现有业务 Controller/Service，不直接访问 Mapper；管理端工具输出继续保持结构化 JSON 和 `all=true` 全量拉取能力；用户端移除旧的关键词分支和旧流式直连逻辑，仅保留 LLM + tool calling 主链路；
+- 文件：`backend/sky-server/src/main/java/com/sky/service/impl/AdminAiChatServiceImpl.java`、`backend/sky-server/src/main/java/com/sky/service/impl/UserAiChatServiceImpl.java`、`backend/sky-server/src/main/java/com/sky/service/ai/admin/`、`backend/sky-server/src/main/java/com/sky/service/ai/user/`、`docs/agent.md`、`docs/PROJECT_DEVELOPMENT_LOG.md`；
+- 验证：`mvn clean compile -DskipTests` 通过；
+- 后续：同步更新 `USER_API_APIFOX.json` 与 `ADMIN_API_APIFOX.json` 的 AI tool 契约；将内存会话迁移到可持久化存储。

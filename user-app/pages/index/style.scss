@@ -292,18 +292,23 @@ $desc-font-color: #818693;
             right: 20rpx;
             bottom: 0rpx;
             display: flex;
+            align-items: center;
             .dish_add,
             .dish_red {
-              display: block;
+              display: flex;
               width: 72rpx;
               height: 72rpx;
+              align-items: center;
+              justify-content: center;
             }
             .dish_number {
               padding: 0 10rpx;
-              line-height: 72rpx;
+              min-width: 18rpx;
+              line-height: 44rpx;
               font-size: 30rpx;
               font-family: PingFangSC, PingFangSC-Medium;
               font-weight: 500;
+              text-align: center;
             }
           }
           .dish_active_btn {
@@ -311,6 +316,27 @@ $desc-font-color: #818693;
             right: 20rpx;
             bottom: 15rpx;
             display: flex;
+            align-items: center;
+            .browse-count {
+              display: flex;
+              align-items: center;
+            }
+            .browse-count-num {
+              min-width: 18rpx;
+              text-align: center;
+              line-height: 44rpx;
+              font-size: 30rpx;
+              font-family: PingFangSC, PingFangSC-Medium;
+              font-weight: 500;
+            }
+            .dish_add,
+            .dish_red {
+              display: flex;
+              width: 72rpx;
+              height: 72rpx;
+              align-items: center;
+              justify-content: center;
+            }
             .check_but {
               width: 128rpx;
               height: 48rpx;
@@ -899,30 +925,33 @@ $desc-font-color: #818693;
   border: 2rpx solid #101a2a;
 }
 
-.browse-count { display: flex; align-items: center; gap: 8rpx; margin-right: 10rpx; font-size: 24rpx; }
+.browse-count {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-right: 10rpx;
+  font-size: 24rpx;
+}
 .cart-flavor { margin-top: 5rpx; color: #8b938e; font-size: 20rpx; }
 
 .cart_pop .dish_active {
-  display: grid !important;
-  grid-template-columns: 44rpx 36rpx 44rpx;
-  column-gap: 8rpx;
+  display: flex !important;
   align-items: center;
 }
 .cart_pop .dish_active .dish_number {
-  width: 36rpx;
+  min-width: 36rpx;
   padding: 0 !important;
   line-height: 44rpx !important;
   text-align: center;
 }
 
 .more_norm_pop .but_item .active {
-  display: grid !important;
-  grid-template-columns: 44rpx 40rpx 44rpx;
+  display: flex !important;
   align-items: center;
-  column-gap: 8rpx;
+  gap: 8rpx;
 }
 .more_norm_pop .but_item .active .dish_number {
-  width: 40rpx;
+  min-width: 40rpx;
   padding: 0 !important;
   line-height: 44rpx !important;
   text-align: center;

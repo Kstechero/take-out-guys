@@ -10,12 +10,12 @@
         (number, status, user_id, address_book_id, order_time, checkout_time,
          pay_method, pay_status, amount, remark, phone, address, consignee,
          estimated_delivery_time, delivery_status, pack_amount,
-         tableware_number, tableware_status)
+         tableware_number, tableware_status, coupon_id, original_amount, discount_amount)
         values
         (#{number}, #{status}, #{userId}, #{addressBookId}, #{orderTime}, #{checkoutTime},
          #{payMethod}, #{payStatus}, #{amount}, #{remark}, #{phone}, #{address}, #{consignee},
          #{estimatedDeliveryTime}, #{deliveryStatus}, #{packAmount},
-         #{tablewareNumber}, #{tablewareStatus})
+         #{tablewareNumber}, #{tablewareStatus}, #{couponId}, #{originalAmount}, #{discountAmount})
     </insert>
 
     <!-- 订单状态变化时只更新传入的字段。 -->

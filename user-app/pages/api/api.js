@@ -39,12 +39,18 @@ export const delAddressBook = ids => request({ url: '/user/addressBook', method:
 export const queryAddressBookById = params => request({ url: `/user/addressBook/${params.id}` })
 export const getAddressBookDefault = () => request({ url: '/user/addressBook/default' })
 
-// AI Agent（接口契约见 AI_AGENT_API_REQUIREMENTS.json；后端按模块逐步实现）
+// 优惠券
+export const getCouponAvailable = params => request({ url: '/user/coupon/available', params, showError: false })
+export const receiveCoupon = couponId => request({ url: `/user/coupon/receive/${couponId}`, method: 'POST', showError: false })
+export const getMyCoupons = params => request({ url: '/user/coupon/my', params, showError: false })
+export const getOrderAvailableCoupons = params => request({ url: '/user/coupon/order/available', params, showError: false })
+
+// AI Agent（已对齐用户端 Apifox 契约；部分后端能力仍待联调）
 export const aiChat = params => request({ url: '/user/ai/chat', method: 'POST', params, showError: false })
+export const aiChatStream = params => request({ url: '/user/ai/chat/stream', params, showError: false })
 export const aiRecommend = params => request({ url: '/user/ai/recommend', method: 'POST', params, showError: false })
-export const aiWriteReview = params => request({ url: '/user/ai/review/write', method: 'POST', params })
-export const getAiSessions = params => request({ url: '/user/ai/session/list', params })
-export const getAiMessages = sessionId => request({ url: `/user/ai/session/${sessionId}/messages` })
+export const aiWriteReview = params => request({ url: '/user/ai/review/write', method: 'POST', params, showError: false })
+export const getAiSessions = () => request({ url: '/user/ai/session/list', showError: false })
 export const deleteAiSession = sessionId => request({ url: `/user/ai/session/${sessionId}`, method: 'DELETE' })
 
 // 旧页面兼容别名，逐步移除

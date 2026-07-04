@@ -13,7 +13,21 @@ import { aiRecommend, newAddShoppingCartAdd } from '../api/api.js'
 export default {
 	data(){return{query:'',loading:false,items:[],notice:'',presets:['一人食 · 30元内','清淡低脂','无辣不欢','适合两个人分享']}},
 	methods:{
-		async recommend(){this.loading=true;this.notice='';try{const res=await aiRecommend({query:this.query,limit:6});this.items=res.data.items||[]}catch(e){this.items=[];this.notice='AI 推荐接口尚未完成，请先实现后端 /user/ai/recommend。'}finally{this.loading=false}},
+		buildRecommendPayload() {
+			const payload = { requirement: this.query.trim() }
+			const budgetMatch = payload.requirement.match(/(\d+(?:\.\d+)?)\s*元/)
+			const peopleMatch = payload.requirement.match(/([1-9]\d*)\s*(?:人|位)/)
+			if (budgetMatch) payload.budget = Number(budgetMatch[1])
+			if (peopleMatch) payload.peopleCount = Number(peopleMatch[1])
+			return payload
+		},
+		normalizeItems(data) {
+			if (Array.isArray(data)) return data
+			if (Array.isArray(data?.items)) return data.items
+			if (Array.isArray(data?.records)) return data.records
+			return []
+		},
+		async recommend(){this.loading=true;this.notice='';try{const res=await aiRecommend(this.buildRecommendPayload());this.items=this.normalizeItems(res.data)}catch(e){this.items=[];this.notice='AI 推荐接口暂未完成后端联调，请先实现 /user/ai/recommend。'}finally{this.loading=false}},
 		async add(item){await newAddShoppingCartAdd({dishId:item.dishId,number:1,amount:item.price,name:item.name,image:item.image});uni.showToast({title:'已加入购物车',icon:'success'})}
 	}
 }

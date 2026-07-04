@@ -3,9 +3,12 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { DataLine, MagicStick, List, Dish, Ticket, ChatDotRound, Warning, User, Fold, Expand, Bell, SwitchButton, Menu, Box, TrendCharts } from '@element-plus/icons-vue'
-import { getShopStatus, setShopStatus } from '@/api/admin'
+import { getAiHealth, getShopStatus, setShopStatus } from '@/api/admin'
 
 const route = useRoute(); const router = useRouter(); const auth = useAuthStore(); const collapsed = ref(false); const shopOpen = ref(false)
+const aiStatus = ref<'pending' | 'up' | 'down'>('pending')
+const aiStatusTitle = computed(() => aiStatus.value === 'up' ? 'AI 后端已连接' : aiStatus.value === 'down' ? 'AI 后端异常' : 'AI 后端待接入')
+const aiStatusDetail = ref('GX10 · ornith 状态未知')
 const title = computed(() => route.meta.title || '运营中心')
 const menus = [
   ['/dashboard', '经营总览', DataLine], ['/reports', '数据统计', TrendCharts], ['/agent', 'AI Agent', MagicStick], ['/orders', '订单管理', List],
@@ -14,7 +17,22 @@ const menus = [
 ]
 async function logout() { await auth.logout(); router.push('/login') }
 async function changeShop(value: string | number | boolean) { await setShopStatus(value ? 1 : 0) }
-onMounted(async () => { const res: any = await getShopStatus(); shopOpen.value = Number(res.data) === 1 })
+async function refreshAiHealth() {
+  try {
+    const res: any = await getAiHealth()
+    const health = res.data || {}
+    aiStatus.value = health.status === 'UP' ? 'up' : 'down'
+    aiStatusDetail.value = `${health.provider || 'AI'} · ${health.model || 'unknown'} · ${health.status || 'UNKNOWN'}`
+  } catch {
+    aiStatus.value = 'down'
+    aiStatusDetail.value = 'GX10 · ornith · 连接失败'
+  }
+}
+onMounted(async () => {
+  const res: any = await getShopStatus()
+  shopOpen.value = Number(res.data) === 1
+  await refreshAiHealth()
+})
 </script>
 
 <template>
@@ -27,7 +45,7 @@ onMounted(async () => { const res: any = await getShopStatus(); shopOpen.value =
           <i v-if="m[0] === '/service' && !collapsed" class="dot">3</i>
         </router-link>
       </nav>
-      <div class="ai-status pending" v-if="!collapsed"><i></i><div><b>AI 后端待接入</b><small>GX10 · ornith 已配置</small></div></div>
+      <div :class="['ai-status', aiStatus]" v-if="!collapsed"><i></i><div><b>{{ aiStatusTitle }}</b><small>{{ aiStatusDetail }}</small></div></div>
     </aside>
     <section class="main">
       <header>

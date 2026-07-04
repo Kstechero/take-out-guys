@@ -41,7 +41,7 @@
 					</view>
 				</view>
 				<view class="address_image">
-					<image class="to_right" src="../../static/toRight.png" mode=""></image>
+					<uni-icons class="to_right" type="arrowright" color="#ff4b12" size="16" />
 				</view>
 			</view>
 			<!-- 下部 -->
@@ -71,6 +71,21 @@
 				<!-- <view class="seize_seat"></view> -->
 			</view >
 			<view class="order_list">
+				<view class="coupon_bar" @click="goCouponPage">
+					<view class="coupon_bar_left">
+						<text class="coupon_label">优惠券</text>
+						<text class="coupon_desc">{{ couponHint }}</text>
+					</view>
+					<view class="coupon_bar_right">
+						<text class="coupon_value">{{ couponValueText }}</text>
+						<uni-icons class="to_right" type="arrowright" color="#ff4b12" size="16" />
+					</view>
+				</view>
+				<view v-if="selectedCoupon" class="coupon_notice">
+					已优惠 ¥{{ couponDiscountAmount }}，下单成功后将自动核销。
+				</view>
+			</view>
+			<view class="order_list">
 				<!-- 添加的备注 -->
 				<view class="uni-textarea">
 					<view class="word_text">
@@ -88,7 +103,7 @@
 			<view class="order_dish_num"> {{orderDishNumber}} </view>
 		</view>
 		<view class="order_price">
-				<text class="ico">￥ </text> {{orderDishPrice+6}}
+				<text class="ico">￥ </text> {{payableAmount}}
 		</view>
 		<view class="order_but">
 			<!-- <view class="order_but_left" @click="goback()">

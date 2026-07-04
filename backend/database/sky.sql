@@ -168,6 +168,9 @@ CREATE TABLE `orders` (
   `pay_method` int NOT NULL DEFAULT '1' COMMENT '支付方式 1微信,2支付宝',
   `pay_status` tinyint NOT NULL DEFAULT '0' COMMENT '支付状态 0未支付 1已支付 2退款',
   `amount` decimal(10,2) NOT NULL COMMENT '实收金额',
+  `coupon_id` bigint DEFAULT NULL COMMENT '优惠券模板ID',
+  `original_amount` decimal(10,2) DEFAULT NULL COMMENT '优惠前金额',
+  `discount_amount` decimal(10,2) NOT NULL DEFAULT 0 COMMENT '优惠金额',
   `remark` varchar(100) COLLATE utf8_bin DEFAULT NULL COMMENT '备注',
   `phone` varchar(11) COLLATE utf8_bin DEFAULT NULL COMMENT '手机号',
   `address` varchar(255) COLLATE utf8_bin DEFAULT NULL COMMENT '地址',
@@ -240,3 +243,41 @@ CREATE TABLE `user` (
   `create_time` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb3 COLLATE=utf8_bin COMMENT='用户信息';
+
+DROP TABLE IF EXISTS `user_coupon`;
+DROP TABLE IF EXISTS `coupon`;
+CREATE TABLE `coupon` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `name` varchar(64) NOT NULL COMMENT '优惠券名称',
+  `type` int NOT NULL DEFAULT 1 COMMENT '1满减券 2折扣券 3新人券',
+  `discount_amount` decimal(10,2) NOT NULL COMMENT '优惠金额',
+  `minimum_amount` decimal(10,2) NOT NULL DEFAULT 0 COMMENT '最低消费金额',
+  `total_count` int NOT NULL,
+  `remaining_count` int NOT NULL,
+  `per_user_limit` int NOT NULL DEFAULT 1,
+  `valid_from` datetime NOT NULL,
+  `valid_until` datetime NOT NULL,
+  `status` int NOT NULL DEFAULT 0 COMMENT '0停用 1启用',
+  `description` varchar(255) DEFAULT NULL,
+  `create_time` datetime NOT NULL,
+  `update_time` datetime NOT NULL,
+  `create_user` bigint DEFAULT NULL,
+  `update_user` bigint DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_coupon_available` (`status`,`valid_from`,`valid_until`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='优惠券';
+
+CREATE TABLE `user_coupon` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` bigint NOT NULL,
+  `coupon_id` bigint NOT NULL,
+  `status` int NOT NULL DEFAULT 0 COMMENT '0未使用 1已使用 2已过期',
+  `receive_time` datetime NOT NULL,
+  `use_time` datetime DEFAULT NULL,
+  `order_id` bigint DEFAULT NULL,
+  `expire_time` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_user_coupon_user_status` (`user_id`,`status`,`expire_time`),
+  KEY `idx_user_coupon_coupon` (`coupon_id`),
+  CONSTRAINT `fk_user_coupon_coupon` FOREIGN KEY (`coupon_id`) REFERENCES `coupon` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='用户优惠券';

@@ -10,6 +10,8 @@ import com.sky.entity.AddressBook;
 import com.sky.entity.OrderDetail;
 import com.sky.entity.Orders;
 import com.sky.entity.ShoppingCart;
+import com.sky.entity.Coupon;
+import com.sky.entity.UserCoupon;
 import com.sky.exception.AddressBookBusinessException;
 import com.sky.exception.OrderBusinessException;
 import com.sky.exception.ShoppingCartBusinessException;
@@ -17,6 +19,8 @@ import com.sky.mapper.AddressBookMapper;
 import com.sky.mapper.OrderDetailMapper;
 import com.sky.mapper.OrderMapper;
 import com.sky.mapper.ShoppingCartMapper;
+import com.sky.mapper.CouponMapper;
+import com.sky.mapper.UserCouponMapper;
 import com.sky.service.OrderService;
 import com.sky.result.PageResult;
 import com.sky.utils.WeChatPayUtil;
@@ -31,6 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
@@ -55,6 +60,12 @@ public class OrderServiceImpl implements OrderService {
     private WeChatPayUtil weChatPayUtil;
     @Autowired
     private WebSocketServer webSocketServer;
+    @Autowired
+    private CouponMapper couponMapper;
+    @Autowired
+    private UserCouponMapper userCouponMapper;
+
+    private static final BigDecimal DELIVERY_FEE = new BigDecimal("6.00");
 
     /** 开发环境开启时，不实际调用微信退款接口。 */
     @Value("${sky.payment.mock-enabled:true}")
@@ -82,9 +93,34 @@ public class OrderServiceImpl implements OrderService {
             throw new ShoppingCartBusinessException(MessageConstant.SHOPPING_CART_IS_NULL);
         }
 
+        // 订单金额必须由服务端购物车计算，不能信任客户端传入的 amount。
+        BigDecimal originalAmount = shoppingCartList.stream()
+                .map(item -> item.getAmount().multiply(BigDecimal.valueOf(item.getNumber())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add)
+                .add(DELIVERY_FEE);
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        Coupon coupon = null;
+        UserCoupon userCoupon = null;
+        if (ordersSubmitDTO.getCouponId() != null) {
+            userCoupon = userCouponMapper.getUnusedForUpdate(userId, ordersSubmitDTO.getCouponId());
+            coupon = couponMapper.getByIdForUpdate(ordersSubmitDTO.getCouponId());
+            LocalDateTime now = LocalDateTime.now();
+            if (userCoupon == null || coupon == null || !Integer.valueOf(1).equals(coupon.getStatus())
+                    || now.isBefore(coupon.getValidFrom()) || now.isAfter(coupon.getValidUntil())) {
+                throw new OrderBusinessException("优惠券不可用或已被使用");
+            }
+            if (originalAmount.compareTo(coupon.getMinimumAmount()) < 0) {
+                throw new OrderBusinessException("订单金额未达到优惠券使用门槛");
+            }
+            discountAmount = coupon.getDiscountAmount().min(originalAmount);
+        }
+
         // 将提交参数与收货信息组装成订单主表数据。
         Orders orders = new Orders();
         BeanUtils.copyProperties(ordersSubmitDTO, orders);
+        orders.setOriginalAmount(originalAmount);
+        orders.setDiscountAmount(discountAmount);
+        orders.setAmount(originalAmount.subtract(discountAmount));
         orders.setNumber(String.valueOf(System.currentTimeMillis()));
         orders.setStatus(Orders.PENDING_PAYMENT);
         orders.setUserId(userId);
@@ -97,6 +133,10 @@ public class OrderServiceImpl implements OrderService {
                 + addressBook.getDistrictName()
                 + addressBook.getDetail());
         orderMapper.insert(orders);
+
+        if (userCoupon != null && userCouponMapper.markUsed(userCoupon.getId(), orders.getId(), LocalDateTime.now()) != 1) {
+            throw new OrderBusinessException("优惠券核销失败，请重新选择");
+        }
 
         // 每一条购物车记录对应一条订单明细，并关联刚生成的订单 id。
         List<OrderDetail> orderDetailList = new ArrayList<>();
@@ -116,6 +156,9 @@ public class OrderServiceImpl implements OrderService {
                 .id(orders.getId())
                 .orderNumber(orders.getNumber())
                 .orderAmount(orders.getAmount())
+                .originalAmount(orders.getOriginalAmount())
+                .discountAmount(orders.getDiscountAmount())
+                .couponId(orders.getCouponId())
                 .orderTime(orders.getOrderTime())
                 .build();
     }
@@ -256,6 +299,7 @@ public class OrderServiceImpl implements OrderService {
         update.setCancelReason("用户取消");
         update.setCancelTime(LocalDateTime.now());
         orderMapper.update(update);
+        userCouponMapper.restoreByOrderId(orders.getId());
     }
 
     /**
@@ -331,6 +375,7 @@ public class OrderServiceImpl implements OrderService {
         update.setRejectionReason(dto.getRejectionReason());
         update.setCancelTime(LocalDateTime.now());
         orderMapper.update(update);
+        userCouponMapper.restoreByOrderId(orders.getId());
     }
 
     /** 商家取消未完成订单；已支付时先申请退款。 */
@@ -352,6 +397,7 @@ public class OrderServiceImpl implements OrderService {
         update.setCancelReason(dto.getCancelReason());
         update.setCancelTime(LocalDateTime.now());
         orderMapper.update(update);
+        userCouponMapper.restoreByOrderId(orders.getId());
     }
 
     /** 已接单订单才能开始派送。 */

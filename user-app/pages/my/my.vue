@@ -32,18 +32,23 @@
 				<view class="address" @click="goAddress">
 					<image class="location" src="../../static/address.png"></image>
 					<text class="address_word">地址管理</text>
-					<image class="to_right" src="../../static/toRight.png" mode=""></image>
+					<uni-icons class="to_right" type="arrowright" color="#ff4b12" size="16" />
 				</view>
 				<!-- 历史订单 -->
 				<view class="order" @click="goOrder">
 					<image class="location" src="../../static/order.png"></image>
 					<text class="order_word">历史订单</text>
-					<image class="to_right" src="../../static/toRight.png" mode=""></image>
+					<uni-icons class="to_right" type="arrowright" color="#ff4b12" size="16" />
 				</view>
 				<view class="order" @click="goReview">
 					<image class="location" src="../../static/edit.png"></image>
 					<text class="order_word">客户评价</text>
-					<image class="to_right" src="../../static/toRight.png"></image>
+					<uni-icons class="to_right" type="arrowright" color="#ff4b12" size="16" />
+				</view>
+				<view class="order" @click="goCoupon">
+					<image class="location" src="../../static/money.png"></image>
+					<text class="order_word">优惠券中心</text>
+					<uni-icons class="to_right" type="arrowright" color="#ff4b12" size="16" />
 				</view>
 			</view>
 			
@@ -85,8 +90,12 @@
 <script>
 import { queryOrderUserPage, oneOrderAgain, delShoppingCart } from '../api/api.js'
 import { mapMutations } from 'vuex'
+import uniIcons from '../../components/uni-icons/uni-icons.vue'
 
 export default {
+	components: {
+		uniIcons
+	},
 	data () {
 		return {
 			psersonUrl: '../../static/btn_waiter_sel.png',
@@ -165,6 +174,7 @@ export default {
 		goAgent () { uni.navigateTo({ url: '/pages/ai/chat' }) },
 		goRecommend () { uni.navigateTo({ url: '/pages/ai/recommend' }) },
 		goReview () { uni.navigateTo({ url: '/pages/review/index' }) },
+		goCoupon () { uni.navigateTo({ url: '/pages/coupon/index?mode=center' }) },
 		async oneOrderFun (id) {
 			let pages = getCurrentPages()
 			let routeIndex = pages.findIndex(item=>item.route==='pages/index/index')
@@ -257,7 +267,7 @@ export default {
 			// 地址及订单
 			.address_order {
 				width: 710rpx;
-				height: 300rpx;
+				height: 400rpx;
 				border-radius: 16rpx;
 				background-color: #fff;
 				margin:20rpx auto;
@@ -284,12 +294,11 @@ export default {
 						line-height: 40rpx;
 					}
 					.to_right {
-						// width: 12rpx;
-						// height: 20rpx;
 						width: 30rpx;
 						height: 30rpx;
-						vertical-align: middle;
-						margin-bottom: 10rpx;
+						display: flex;
+						align-items: center;
+						justify-content: center;
 						position: absolute;
 						top: 50%;
 						right: 20rpx;
@@ -320,12 +329,11 @@ export default {
 						line-height: 40rpx;
 					}
 					.to_right {
-						// width: 12rpx;
-						// height: 20rpx;
 						width: 30rpx;
 						height: 30rpx;
-						vertical-align: middle;
-						color: #fff;
+						display: flex;
+						align-items: center;
+						justify-content: center;
 						position: absolute;
 						top: 50%;
 						right: 0;

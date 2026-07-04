@@ -24,7 +24,26 @@ export const deliverOrder = (id: number) => request.put(`/order/delivery/${id}`)
 export const completeOrder = (id: number) => request.put(`/order/complete/${id}`)
 export const getShopStatus = () => request.get('/shop/status')
 export const setShopStatus = (status: number) => request.put(`/shop/${status}`)
+export const getAiHealth = () => request.get('/ai/health')
 export const getTurnoverReport = (begin: string, end: string) => request.get('/report/turnoverStatistics', { params: { begin, end } })
 export const getOrderReport = (begin: string, end: string) => request.get('/report/ordersStatistics', { params: { begin, end } })
 export const getUserReport = (begin: string, end: string) => request.get('/report/userStatistics', { params: { begin, end } })
 export const getTop10Report = (begin: string, end: string) => request.get('/report/top10', { params: { begin, end } })
+
+export interface CouponPayload {
+  name: string
+  type: number
+  discountAmount: number
+  minimumAmount: number
+  totalCount: number
+  perUserLimit: number
+  validFrom: string
+  validUntil: string
+  status: number
+  description?: string
+}
+
+export const getCouponPage = (params: { page: number; pageSize: number; name?: string; status?: number }) => request.get('/coupon/page', { params })
+export const createCoupon = (data: CouponPayload) => request.post('/coupon', data)
+export const updateCoupon = (id: number, data: CouponPayload) => request.put(`/coupon/${id}`, data)
+export const deleteCoupon = (id: number) => request.delete(`/coupon/${id}`)

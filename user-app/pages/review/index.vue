@@ -21,8 +21,9 @@ export default {
 		async load(){try{const res=await queryOrderUserPage({page:1,pageSize:20,status:5});this.orders=(res.data.records||[]).filter(Boolean)}catch(e){this.orders=[]}},
 		form(id){if(!this.forms[id])this.forms[id]={score:5,content:''};return this.forms[id]},
 		dishNames(order){return (order.orderDetailList||[]).map(item=>item.name).join('、')},
-		async writeWithAi(order){try{const res=await aiWriteReview({orderId:order.id,action:'write',draft:this.form(order.id).content,instruction:'生成自然真实的用餐评价'});this.form(order.id).content=res.data.content}catch(e){uni.showToast({title:'AI 评价接口尚未实现',icon:'none'})}},
-		async submit(order){const value=this.form(order.id);if(!value.content.trim()){uni.showToast({title:'请填写评价内容',icon:'none'});return}try{await submitReview({orderId:order.id,score:value.score,content:value.content});uni.showToast({title:'评价成功'});this.orders=this.orders.filter(item=>item.id!==order.id)}catch(e){uni.showToast({title:'评价后端接口尚未实现',icon:'none'})}}
+		getDishId(order){const first=(order.orderDetailList||[])[0]||{};return first.dishId||first.setmealId||first.id||null},
+		async writeWithAi(order){const value=this.form(order.id);try{const res=await aiWriteReview({orderId:order.id,dishId:this.getDishId(order),rating:value.score,draft:value.content,style:'自然',keywords:this.dishNames(order)});value.content=(res.data&&res.data.content)||value.content}catch(e){uni.showToast({title:'AI 评价接口暂未联通',icon:'none'})}},
+		async submit(order){const value=this.form(order.id);const dishId=this.getDishId(order);if(!value.content.trim()){uni.showToast({title:'请填写评价内容',icon:'none'});return}if(!dishId){uni.showToast({title:'未找到菜品信息，暂无法提交评价',icon:'none'});return}try{await submitReview({orderId:order.id,dishId,rating:value.score,content:value.content,images:[]});uni.showToast({title:'评价成功'});this.orders=this.orders.filter(item=>item.id!==order.id)}catch(e){uni.showToast({title:'评价接口暂未完成后端联调',icon:'none'})}}
 	}
 }
 </script>

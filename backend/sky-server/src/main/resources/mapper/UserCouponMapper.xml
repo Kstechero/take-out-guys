@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sky.mapper.UserCouponMapper">
+    <select id="listByUser" resultType="com.sky.vo.UserCouponVO">
+        select c.id as coupon_id,uc.id as id,uc.id as user_coupon_id,c.name,c.type,c.discount_amount,c.minimum_amount,
+            case when uc.status=0 and uc.expire_time&lt;=now() then 2 else uc.status end as status,
+            c.description,c.valid_from,c.valid_until,uc.receive_time,uc.use_time,uc.order_id,uc.expire_time
+        from user_coupon uc inner join coupon c on c.id=uc.coupon_id
+        where uc.user_id=#{userId}
+        <if test="status != null">
+            <choose>
+                <when test="status == 2">and uc.status=0 and uc.expire_time&lt;=now()</when>
+                <when test="status == 0">and uc.status=0 and uc.expire_time&gt;now()</when>
+                <otherwise>and uc.status=#{status}</otherwise>
+            </choose>
+        </if>
+        order by uc.receive_time desc
+    </select>
+    <select id="getUnusedForUpdate" resultType="com.sky.entity.UserCoupon">
+        select * from user_coupon
+        where user_id=#{userId} and coupon_id=#{couponId} and status=0 and expire_time&gt;now()
+        order by expire_time asc,id asc limit 1 for update
+    </select>
+    <update id="markUsed">
+        update user_coupon set status=1,use_time=#{useTime},order_id=#{orderId}
+        where id=#{id} and status=0 and expire_time&gt;#{useTime}
+    </update>
+    <update id="restoreByOrderId">
+        update user_coupon set status=0,use_time=null,order_id=null where order_id=#{orderId} and status=1
+    </update>
+</mapper>

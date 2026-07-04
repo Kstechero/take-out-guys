@@ -129,8 +129,9 @@ $desc-font-color: #818693;
         .to_right {
           width: 30rpx;
           height: 30rpx;
-          vertical-align: middle;
-          margin-bottom: 10rpx;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           position: absolute;
           top: 50%;
           right: 6rpx;
@@ -286,6 +287,50 @@ $desc-font-color: #818693;
           letter-spacing: 0px;
           padding-left: 6rpx;
         }
+      }
+      .coupon_bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 28rpx 30rpx;
+        .coupon_bar_left {
+          display: flex;
+          flex-direction: column;
+          .coupon_label {
+            font-size: 30rpx;
+            font-weight: 600;
+            color: #20232a;
+          }
+          .coupon_desc {
+            margin-top: 10rpx;
+            font-size: 24rpx;
+            color: #8b938e;
+          }
+        }
+        .coupon_bar_right {
+          display: flex;
+          align-items: center;
+          .coupon_value {
+            max-width: 280rpx;
+            font-size: 24rpx;
+            color: #ff4b12;
+            text-align: right;
+          }
+          .to_right {
+            width: 30rpx;
+            height: 30rpx;
+            margin-left: 8rpx;
+          }
+        }
+      }
+      .coupon_notice {
+        margin: 0 30rpx 24rpx;
+        padding: 18rpx 20rpx;
+        background: #fff5df;
+        border-radius: 16rpx;
+        font-size: 23rpx;
+        line-height: 1.5;
+        color: #986912;
       }
       // 添加的备注
       .uni-textarea {

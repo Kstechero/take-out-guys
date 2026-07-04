@@ -2,6 +2,7 @@ package com.sky.task;
 
 import com.sky.entity.Orders;
 import com.sky.mapper.OrderMapper;
+import com.sky.mapper.UserCouponMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,6 +23,8 @@ public class OrderTask {
 
     @Autowired
     private OrderMapper orderMapper;
+    @Autowired
+    private UserCouponMapper userCouponMapper;
 
     /**
      * 待付款订单超过 15 分钟后自动取消。
@@ -46,6 +49,7 @@ public class OrderTask {
                     .cancelTime(now)
                     .build();
             orderMapper.update(update);
+            userCouponMapper.restoreByOrderId(order.getId());
         }
         log.info("Spring Task 已自动取消 {} 个支付超时订单", timeoutOrders.size());
     }

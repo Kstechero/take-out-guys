@@ -75,19 +75,27 @@
 						<view class="dish_active" v-if="!item.flavors || item.flavors.length === 0">
 							<!-- 减菜 -->
 							<!-- <image v-if="item.dishNumber > 0" src="../../static/btn_red.png"  @click="redDishAction(item, '普通')" class="dish_red"></image> -->
-							<view v-if="item.dishNumber >= 1" @click="redDishFromBrowse(item)" class="dish_red">−</view>
+							<view v-if="item.dishNumber >= 1" @click="redDishFromBrowse(item)" class="dish_red">
+								<uni-icons type="minus" color="#ff4b12" size="18" />
+							</view>
 							<!-- <image v-if="item.newCardNumber > 0" src="../../static/btn_red.png"  @click="redDishAction(item, '普通')" class="dish_red"></image> -->
 							<text v-if="item.dishNumber > 0" class="dish_number">{{item.dishNumber}}</text>
 							<!-- <text v-if="item.newCardNumber > 0" class="dish_number">{{item.newCardNumber}}</text> -->
 							<!-- 加菜 -->
-							<view class="dish_add" @click="addDishFromBrowse(item)">+</view>
+							<view class="dish_add" @click="addDishFromBrowse(item)">
+								<uni-icons type="plus" color="#ffffff" size="18" />
+							</view>
 						</view>
 						<view class="dish_active_btn" v-else>
 							<view v-if="item.dishNumber > 0" class="browse-count">
-								<view class="dish_red" @click.stop="redDishFromBrowse(item)">−</view>
-								<text>{{item.dishNumber}}</text>
+								<view class="dish_red" @click.stop="redDishFromBrowse(item)">
+									<uni-icons type="minus" color="#ff4b12" size="18" />
+								</view>
+								<text class="browse-count-num">{{item.dishNumber}}</text>
 							</view>
-							<view class="dish_add" @click="moreNormDataesHandle(item)">+</view>
+							<view class="dish_add" @click="moreNormDataesHandle(item)">
+								<uni-icons type="plus" color="#ffffff" size="18" />
+							</view>
 						</view>
 					</view>
 				</view>
@@ -190,10 +198,14 @@
 						 <text class="ico"> ￥ </text> {{dishDetailes.price}}
 					</view>
 					<view class="active" v-if="dishDetailes.dishNumber && dishDetailes.dishNumber > 0">
-						<view @click="redDishAction(dishDetailes, '普通')" class="dish_red">−</view>
+						<view @click="redDishAction(dishDetailes, '普通')" class="dish_red">
+							<uni-icons type="minus" color="#ff4b12" size="18" />
+						</view>
 						<text class="dish_number">{{dishDetailes.dishNumber}}</text>
 						<!-- <text class="dish_number">{{item.newCardNumber}}</text> -->
-						<view class="dish_add" @click="addDishAction(dishDetailes, '普通')">+</view>
+						<view class="dish_add" @click="addDishAction(dishDetailes, '普通')">
+							<uni-icons type="plus" color="#ffffff" size="18" />
+						</view>
 					</view>
 					<view class="active" v-else-if="dishDetailes.dishNumber == 0">
 						<view class="dish_card_add" @click="addDishAction(dishDetailes, '普通')"> 加入购物车 </view>
@@ -221,10 +233,14 @@
 						 <text class="ico"> ￥ </text> {{dishDetailes.price}}
 					</view>
 					<view class="active" v-if="dishDetailes.dishNumber && dishDetailes.dishNumber > 0">
-						<view @click="redDishAction(dishDetailes, '普通')" class="dish_red">−</view>
+						<view @click="redDishAction(dishDetailes, '普通')" class="dish_red">
+							<uni-icons type="minus" color="#ff4b12" size="18" />
+						</view>
 						<text class="dish_number">{{dishDetailes.dishNumber}}</text>
 						<!-- <text class="dish_number">{{item.newCardNumber}}</text> -->
-						<view class="dish_add" @click="addDishAction(dishDetailes, '普通')">+</view>
+						<view class="dish_add" @click="addDishAction(dishDetailes, '普通')">
+							<uni-icons type="plus" color="#ffffff" size="18" />
+						</view>
 					</view>
 					<view class="active" v-else-if="dishDetailes.dishNumber == 0">
 						<view class="dish_card_add" @click="addDishAction(dishDetailes, '普通')"> 加入购物车 </view>
@@ -242,7 +258,7 @@
 				<view class="top_title">
 					<view class="tit"> 购物车 </view>
 					<view class="clear" @click.stop="clearCardOrder()"> 
-					<image class="clear_icon" src="../../static/clear.png" mode=""></image> 
+					<uni-icons class="clear_icon" type="clear" color="#ff4b12" size="16" /> 
 						<text class="clear-des">清空 </text>	
 					</view>
 				</view>
@@ -256,11 +272,15 @@
 								<view class="dish_name"> {{ obj.name }} </view>
 								<view v-if="obj.dishFlavor" class="cart-flavor">口味：{{ obj.dishFlavor }}</view>
 								<view class="dish_price"> <text class="ico">￥</text> {{ obj.amount }} </view>
-								<view class="dish_active">
-									<view v-if="obj.number && obj.number > 0" @click.stop="redDishAction(obj, '购物车')" class="dish_red">−</view>
-									<text v-if="obj.number && obj.number > 0" class="dish_number">{{obj.number}}</text>
-									<view class="dish_add" @click.stop="addDishAction(obj, '购物车')">+</view>
+							<view class="dish_active">
+								<view v-if="obj.number && obj.number > 0" @click.stop="redDishAction(obj, '购物车')" class="dish_red">
+									<uni-icons type="minus" color="#ff4b12" size="18" />
 								</view>
+								<text v-if="obj.number && obj.number > 0" class="dish_number">{{obj.number}}</text>
+								<view class="dish_add" @click.stop="addDishAction(obj, '购物车')">
+									<uni-icons type="plus" color="#ffffff" size="18" />
+								</view>
+							</view>
 							</view>
 						</view>
 					</view>

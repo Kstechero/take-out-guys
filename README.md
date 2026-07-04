@@ -41,6 +41,5 @@ npm run dev
 
 - [开发日志](docs/PROJECT_DEVELOPMENT_LOG.md)
 - [完整项目说明](docs/SKY_TAKE_OUT_FULL_PROJECT_README.md)
-- [后端 Apifox](docs/BACKEND_API_APIFOX.json)
-- [AI API 需求](docs/AI_AGENT_API_REQUIREMENTS.json)
-- [AI Apifox](docs/AI_AGENT_API_APIFOX.json)
+- [用户端 Apifox](docs/USER_API_APIFOX.json)
+- [管理端 Apifox](docs/ADMIN_API_APIFOX.json)
