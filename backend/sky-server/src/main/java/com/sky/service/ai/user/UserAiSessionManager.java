@@ -1,5 +1,9 @@
 package com.sky.service.ai.user;
 
+import com.sky.entity.AiChatMessage;
+import com.sky.entity.AiChatSession;
+import com.sky.mapper.AiChatMessageMapper;
+import com.sky.mapper.AiChatSessionMapper;
 import com.sky.vo.AiSessionVO;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -7,46 +11,56 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 public class UserAiSessionManager {
 
-    private static final int MAX_SESSIONS_PER_USER = 50;
+    private static final String SCOPE = "user";
     private static final int MAX_HISTORY_MESSAGES = 50;
     private static final int MAX_TITLE_LENGTH = 50;
+    private static final int MAX_LAST_MESSAGE_LENGTH = 480;
 
-    private final AtomicLong sessionIdGenerator = new AtomicLong(1000);
-    private final Map<Long, Map<Long, ChatSession>> userSessions = new ConcurrentHashMap<>();
+    private final AiChatSessionMapper sessionMapper;
+    private final AiChatMessageMapper messageMapper;
+
+    public UserAiSessionManager(AiChatSessionMapper sessionMapper, AiChatMessageMapper messageMapper) {
+        this.sessionMapper = sessionMapper;
+        this.messageMapper = messageMapper;
+    }
 
     public ChatSession getOrCreateSession(Long userId, Long sessionId, String firstMessage) {
-        Map<Long, ChatSession> sessions = userSessions.computeIfAbsent(userId, key -> new ConcurrentHashMap<>());
         if (sessionId != null) {
-            ChatSession existing = sessions.get(sessionId);
+            AiChatSession existing = sessionMapper.getByIdAndOwner(sessionId, SCOPE, userId);
             if (existing != null) {
-                return existing;
+                return hydrate(existing);
             }
         }
 
         LocalDateTime now = LocalDateTime.now();
-        ChatSession session = new ChatSession();
-        session.setId(sessionIdGenerator.incrementAndGet());
-        session.setUserId(userId);
+        AiChatSession session = new AiChatSession();
+        session.setScope(SCOPE);
+        session.setOwnerId(userId);
         session.setTitle(buildTitle(firstMessage));
+        session.setLastMessage(normalizeForStorage(firstMessage, MAX_LAST_MESSAGE_LENGTH));
         session.setCreateTime(now);
         session.setUpdateTime(now);
-        sessions.put(session.getId(), session);
-        trimSessions(sessions);
-        return session;
+        sessionMapper.insert(session);
+        return hydrate(session);
     }
 
     public void appendMessage(ChatSession session, String role, String content) {
         synchronized (session) {
-            session.getMessages().add(new ChatMessage(role, content));
+            AiChatMessage message = new AiChatMessage();
+            message.setSessionId(session.getId());
+            message.setRole(role);
+            message.setContent(content);
+            message.setCreateTime(LocalDateTime.now());
+            messageMapper.insert(message);
+            session.getMessages().add(new ChatMessage(message.getId(), role, content));
             while (session.getMessages().size() > MAX_HISTORY_MESSAGES) {
                 session.getMessages().remove(0);
             }
@@ -61,14 +75,24 @@ public class UserAiSessionManager {
             }
             ChatMessage last = messages.get(messages.size() - 1);
             if (Objects.equals(last.getRole(), "user") && Objects.equals(last.getContent(), content)) {
+                if (last.getId() != null) {
+                    messageMapper.deleteById(last.getId());
+                }
                 messages.remove(messages.size() - 1);
             }
         }
     }
 
     public void touchSession(ChatSession session, String lastMessage) {
-        session.setLastMessage(lastMessage);
+        String normalized = normalizeForStorage(lastMessage, MAX_LAST_MESSAGE_LENGTH);
+        session.setLastMessage(normalized);
         session.setUpdateTime(LocalDateTime.now());
+        AiChatSession meta = new AiChatSession();
+        meta.setId(session.getId());
+        meta.setTitle(normalizeForStorage(session.getTitle(), MAX_TITLE_LENGTH));
+        meta.setLastMessage(normalized);
+        meta.setUpdateTime(session.getUpdateTime());
+        sessionMapper.updateMeta(meta);
     }
 
     public List<Map<String, Object>> history(ChatSession session) {
@@ -82,54 +106,64 @@ public class UserAiSessionManager {
     }
 
     public List<AiSessionVO> listSessions(Long userId) {
-        Map<Long, ChatSession> sessions = userSessions.getOrDefault(userId, java.util.Collections.emptyMap());
         List<AiSessionVO> result = new ArrayList<>();
-        for (ChatSession session : sessions.values()) {
-            result.add(toSessionVO(session));
+        for (AiChatSession session : sessionMapper.listByOwner(SCOPE, userId)) {
+            AiSessionVO vo = new AiSessionVO();
+            vo.setId(session.getId());
+            vo.setTitle(session.getTitle());
+            vo.setLastMessage(session.getLastMessage());
+            vo.setCreateTime(session.getCreateTime());
+            vo.setUpdateTime(session.getUpdateTime());
+            result.add(vo);
         }
         result.sort(Comparator.comparing(AiSessionVO::getUpdateTime, Comparator.nullsLast(Comparator.reverseOrder())));
         return result;
     }
 
     public void deleteSession(Long userId, Long sessionId) {
-        Map<Long, ChatSession> sessions = userSessions.get(userId);
-        if (sessions != null) {
-            sessions.remove(sessionId);
+        AiChatSession existing = sessionMapper.getByIdAndOwner(sessionId, SCOPE, userId);
+        if (existing != null) {
+            messageMapper.deleteBySessionId(sessionId);
+            sessionMapper.deleteByIdAndOwner(sessionId, SCOPE, userId);
         }
     }
 
-    private void trimSessions(Map<Long, ChatSession> sessions) {
-        if (sessions.size() <= MAX_SESSIONS_PER_USER) {
-            return;
+    private ChatSession hydrate(AiChatSession entity) {
+        ChatSession session = new ChatSession();
+        session.setId(entity.getId());
+        session.setUserId(entity.getOwnerId());
+        session.setTitle(entity.getTitle());
+        session.setLastMessage(entity.getLastMessage());
+        session.setCreateTime(entity.getCreateTime());
+        session.setUpdateTime(entity.getUpdateTime());
+        List<AiChatMessage> history = messageMapper.listRecentBySessionId(entity.getId(), MAX_HISTORY_MESSAGES);
+        for (AiChatMessage message : history) {
+            session.getMessages().add(new ChatMessage(message.getId(), message.getRole(), message.getContent()));
         }
-        ChatSession oldest = sessions.values().stream()
-                .min(Comparator.comparing(ChatSession::getUpdateTime, Comparator.nullsLast(Comparator.naturalOrder())))
-                .orElse(null);
-        if (oldest != null) {
-            sessions.remove(oldest.getId());
-        }
-    }
-
-    private AiSessionVO toSessionVO(ChatSession session) {
-        AiSessionVO vo = new AiSessionVO();
-        vo.setId(session.getId());
-        vo.setTitle(session.getTitle());
-        vo.setLastMessage(session.getLastMessage());
-        vo.setCreateTime(session.getCreateTime());
-        vo.setUpdateTime(session.getUpdateTime());
-        return vo;
+        return session;
     }
 
     private String buildTitle(String message) {
-        String normalized = message == null ? "" : message.trim().replaceAll("\\s+", " ");
+        String normalized = normalizeForStorage(message, MAX_TITLE_LENGTH);
         if (!StringUtils.hasText(normalized)) {
             return "新会话";
         }
-        return normalized.length() <= MAX_TITLE_LENGTH ? normalized : normalized.substring(0, MAX_TITLE_LENGTH) + "...";
+        return normalized;
+    }
+
+    private String normalizeForStorage(String value, int maxLength) {
+        if (value == null) {
+            return null;
+        }
+        String normalized = value.trim().replaceAll("\\s+", " ");
+        if (normalized.length() <= maxLength) {
+            return normalized;
+        }
+        return normalized.substring(0, maxLength);
     }
 
     private Map<String, Object> mapOf(Object... values) {
-        Map<String, Object> result = new java.util.LinkedHashMap<>();
+        Map<String, Object> result = new LinkedHashMap<>();
         for (int i = 0; i < values.length; i += 2) {
             result.put(String.valueOf(values[i]), values[i + 1]);
         }
@@ -161,14 +195,17 @@ public class UserAiSessionManager {
     }
 
     public static class ChatMessage {
+        private final Long id;
         private final String role;
         private final String content;
 
-        public ChatMessage(String role, String content) {
+        public ChatMessage(Long id, String role, String content) {
+            this.id = id;
             this.role = role;
             this.content = content;
         }
 
+        public Long getId() { return id; }
         public String getRole() { return role; }
         public String getContent() { return content; }
     }

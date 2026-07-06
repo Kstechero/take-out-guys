@@ -1,9 +1,13 @@
 package com.sky.controller.user;
 
+import com.sky.dto.AiRecommendRequestDTO;
+import com.sky.dto.AiReviewWriteRequestDTO;
 import com.sky.dto.UserAiChatRequestDTO;
 import com.sky.result.Result;
 import com.sky.service.UserAiChatService;
+import com.sky.vo.AiReviewWriteVO;
 import com.sky.vo.AiSessionVO;
+import com.sky.vo.AiRecommendItemVO;
 import com.sky.vo.UserAiChatResponseVO;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -22,7 +26,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/user/ai")
-@Api(tags = "用户端 AI")
+@Api(tags = "用户端AI")
 public class UserAiController {
 
     private final UserAiChatService userAiChatService;
@@ -37,6 +41,18 @@ public class UserAiController {
         return Result.success(userAiChatService.chat(request));
     }
 
+    @PostMapping("/recommend")
+    @ApiOperation("AI 推荐")
+    public Result<List<AiRecommendItemVO>> recommend(@RequestBody AiRecommendRequestDTO request) {
+        return Result.success(userAiChatService.recommend(request));
+    }
+
+    @PostMapping("/review/write")
+    @ApiOperation("AI 帮写评价")
+    public Result<AiReviewWriteVO> writeReview(@RequestBody AiReviewWriteRequestDTO request) {
+        return Result.success(userAiChatService.writeReview(request));
+    }
+
     @GetMapping(value = "/chat/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @ApiOperation("AI 流式对话（SSE）")
     public SseEmitter stream(@RequestParam(required = false) Long sessionId, @RequestParam String message) {
@@ -44,13 +60,13 @@ public class UserAiController {
     }
 
     @GetMapping("/session/list")
-    @ApiOperation("查询当前用户的 AI 会话")
+    @ApiOperation("查询当前用户的AI会话")
     public Result<List<AiSessionVO>> listSessions() {
         return Result.success(userAiChatService.listSessions());
     }
 
     @DeleteMapping("/session/{sessionId}")
-    @ApiOperation("删除 AI 会话")
+    @ApiOperation("删除AI会话")
     public Result<String> deleteSession(@PathVariable Long sessionId) {
         userAiChatService.deleteSession(sessionId);
         return Result.success();

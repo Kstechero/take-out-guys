@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sky.mapper.SensitiveWordMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into sensitive_word(word, level, replacement, status, hit_count, create_time, update_time, create_user, update_user)
+        values(#{word}, #{level}, #{replacement}, #{status}, #{hitCount}, #{createTime}, #{updateTime}, #{createUser}, #{updateUser})
+    </insert>
+
+    <update id="update">
+        update sensitive_word
+        set word = #{word},
+            level = #{level},
+            replacement = #{replacement},
+            status = #{status},
+            update_time = #{updateTime},
+            update_user = #{updateUser}
+        where id = #{id}
+    </update>
+
+    <select id="getById" resultType="com.sky.entity.SensitiveWord">
+        select * from sensitive_word where id = #{id}
+    </select>
+
+    <select id="getByWord" resultType="com.sky.entity.SensitiveWord">
+        select * from sensitive_word where word = #{word} limit 1
+    </select>
+
+    <select id="pageQuery" resultType="com.sky.entity.SensitiveWord">
+        select * from sensitive_word
+        <where>
+            <if test="word != null and word != ''">and word like concat('%', #{word}, '%')</if>
+            <if test="status != null">and status = #{status}</if>
+        </where>
+        order by update_time desc, id desc
+    </select>
+
+    <select id="listActive" resultType="com.sky.entity.SensitiveWord">
+        select * from sensitive_word where status = 1 order by char_length(word) desc, id desc
+    </select>
+
+    <delete id="deleteBatch">
+        delete from sensitive_word where id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <update id="increaseHitCount">
+        update sensitive_word
+        set hit_count = ifnull(hit_count, 0) + 1,
+            update_time = now()
+        where id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </update>
+</mapper>

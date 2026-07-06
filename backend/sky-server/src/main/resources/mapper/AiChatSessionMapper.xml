@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sky.mapper.AiChatSessionMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into ai_chat_session(scope, owner_id, title, last_message, create_time, update_time)
+        values(#{scope}, #{ownerId}, #{title}, #{lastMessage}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="getByIdAndOwner" resultType="com.sky.entity.AiChatSession">
+        select * from ai_chat_session where id = #{id} and scope = #{scope} and owner_id = #{ownerId}
+    </select>
+
+    <select id="listByOwner" resultType="com.sky.entity.AiChatSession">
+        select * from ai_chat_session
+        where scope = #{scope} and owner_id = #{ownerId}
+        order by update_time desc, id desc
+    </select>
+
+    <update id="updateMeta">
+        update ai_chat_session
+        set title = #{title},
+            last_message = #{lastMessage},
+            update_time = #{updateTime}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteByIdAndOwner">
+        delete from ai_chat_session where id = #{id} and scope = #{scope} and owner_id = #{ownerId}
+    </delete>
+</mapper>

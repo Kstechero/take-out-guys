@@ -70,6 +70,15 @@ public class UserAiToolRegistry {
                         "include_dishes", AiToolCallingClient.booleanProperty("Whether to include dishes"),
                         "include_setmeals", AiToolCallingClient.booleanProperty("Whether to include setmeals")
                 )));
+        tools.add(AiToolCallingClient.tool("search_service_knowledge", "Search customer-facing service knowledge such as delivery range, after-sales rules, coupon usage, or dine-in pickup guidance",
+                mapOf(
+                        "query", AiToolCallingClient.stringProperty("Natural-language question about service rules or platform process"),
+                        "top_k", integerProperty("Maximum number of matched knowledge chunks")
+                ), "query"));
+        tools.add(AiToolCallingClient.tool("read_service_resource", "Read a service knowledge document by resource URI",
+                mapOf(
+                        "uri", AiToolCallingClient.stringProperty("Resource URI returned by search_service_knowledge")
+                ), "uri"));
         return tools;
     }
 

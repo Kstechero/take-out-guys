@@ -136,6 +136,19 @@ public class AdminAiToolRegistry {
                         "start_date", AiToolCallingClient.stringProperty("Custom range start date in yyyy-MM-dd"),
                         "end_date", AiToolCallingClient.stringProperty("Custom range end date in yyyy-MM-dd")
                 )));
+        tools.add(AiToolCallingClient.tool("list_operational_documents", "List operational documents used by the admin assistant",
+                Collections.emptyMap()));
+        tools.add(AiToolCallingClient.tool("search_operational_knowledge", "Search operational knowledge for architecture, delivery process, platform rules, release history, or AI workflow boundaries",
+                mapOf(
+                        "query", AiToolCallingClient.stringProperty("Natural-language query for internal operational knowledge"),
+                        "top_k", integerProperty("Maximum number of matched segments to return")
+                ), "query"));
+        tools.add(AiToolCallingClient.tool("list_resource_catalog", "List the current internal resource catalog and read-only capabilities",
+                Collections.emptyMap()));
+        tools.add(AiToolCallingClient.tool("read_resource_detail", "Read a document from the internal resource catalog",
+                mapOf(
+                        "uri", AiToolCallingClient.stringProperty("Resource URI returned by list_resource_catalog or list_operational_documents")
+                ), "uri"));
         tools.add(AiToolCallingClient.tool("describe_upload_capability", "Explain the current chat boundary for admin file upload",
                 Collections.emptyMap()));
         return tools;

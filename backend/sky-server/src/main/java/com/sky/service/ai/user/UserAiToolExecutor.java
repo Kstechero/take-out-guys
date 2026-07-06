@@ -15,6 +15,7 @@ import com.sky.result.Result;
 import com.sky.service.DishService;
 import com.sky.service.OrderService;
 import com.sky.service.SetmealService;
+import com.sky.service.ai.knowledge.OperationsKnowledgeService;
 import com.sky.vo.DishVO;
 import com.sky.vo.OrderVO;
 import org.springframework.stereotype.Component;
@@ -44,6 +45,7 @@ public class UserAiToolExecutor {
     private final DishService dishService;
     private final SetmealService setmealService;
     private final OrderService orderService;
+    private final OperationsKnowledgeService knowledgeService;
 
     public UserAiToolExecutor(ObjectMapper objectMapper,
                               com.sky.controller.user.ShopController shopController,
@@ -53,7 +55,8 @@ public class UserAiToolExecutor {
                               com.sky.controller.user.OrderController orderController,
                               DishService dishService,
                               SetmealService setmealService,
-                              OrderService orderService) {
+                              OrderService orderService,
+                              OperationsKnowledgeService knowledgeService) {
         this.objectMapper = objectMapper;
         this.shopController = shopController;
         this.addressBookController = addressBookController;
@@ -63,6 +66,7 @@ public class UserAiToolExecutor {
         this.dishService = dishService;
         this.setmealService = setmealService;
         this.orderService = orderService;
+        this.knowledgeService = knowledgeService;
     }
 
     public String execute(String name, JsonNode args) throws Exception {
@@ -87,6 +91,10 @@ public class UserAiToolExecutor {
                 return json(manageOrderPayload(args));
             case "search_menu":
                 return json(searchMenuPayload(args));
+            case "search_service_knowledge":
+                return json(searchServiceKnowledgePayload(args));
+            case "read_service_resource":
+                return json(readServiceResourcePayload(args));
             default:
                 throw new IllegalArgumentException("Unknown user tool: " + name);
         }
@@ -240,6 +248,14 @@ public class UserAiToolExecutor {
                 "dishes", dishes,
                 "setmeals", setmeals
         );
+    }
+
+    private Object searchServiceKnowledgePayload(JsonNode args) {
+        return knowledgeService.search(requiredText(args, "query"), parseInteger(args, "top_k", "topK"));
+    }
+
+    private Object readServiceResourcePayload(JsonNode args) {
+        return knowledgeService.readResource(requiredText(args, "uri"));
     }
 
     private List<DishVO> filterDishes(String keyword, Long categoryId) {

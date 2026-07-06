@@ -31,6 +31,8 @@ import com.sky.entity.DishFlavor;
 import com.sky.entity.SetmealDish;
 import com.sky.result.PageResult;
 import com.sky.result.Result;
+import com.sky.service.ai.knowledge.OperationsKnowledgeService;
+import com.sky.service.ai.mcp.OperationsResourceCatalogService;
 import com.sky.vo.OrderVO;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -63,6 +65,8 @@ public class AdminAiToolExecutor {
     private final EmployeeController employeeController;
     private final WorkspaceController workspaceController;
     private final ReportController reportController;
+    private final OperationsKnowledgeService knowledgeService;
+    private final OperationsResourceCatalogService resourceCatalogService;
 
     public AdminAiToolExecutor(ObjectMapper objectMapper,
                                ShopController shopController,
@@ -73,7 +77,9 @@ public class AdminAiToolExecutor {
                                CategoryController categoryController,
                                EmployeeController employeeController,
                                WorkspaceController workspaceController,
-                               ReportController reportController) {
+                               ReportController reportController,
+                               OperationsKnowledgeService knowledgeService,
+                               OperationsResourceCatalogService resourceCatalogService) {
         this.objectMapper = objectMapper;
         this.shopController = shopController;
         this.orderController = orderController;
@@ -84,6 +90,8 @@ public class AdminAiToolExecutor {
         this.employeeController = employeeController;
         this.workspaceController = workspaceController;
         this.reportController = reportController;
+        this.knowledgeService = knowledgeService;
+        this.resourceCatalogService = resourceCatalogService;
     }
 
     public String execute(String name, JsonNode args) throws Exception {
@@ -124,6 +132,14 @@ public class AdminAiToolExecutor {
                 return json(getBusinessOverviewPayload());
             case "get_business_trend":
                 return json(getBusinessTrendPayload(args));
+            case "list_operational_documents":
+                return json(knowledgeService.listSources());
+            case "search_operational_knowledge":
+                return json(searchOperationalKnowledgePayload(args));
+            case "list_resource_catalog":
+                return json(resourceCatalogService.listCatalog());
+            case "read_resource_detail":
+                return json(readResourceDetailPayload(args));
             case "describe_upload_capability":
                 return json(describeUploadCapabilityPayload());
             default:
@@ -479,6 +495,14 @@ public class AdminAiToolExecutor {
                 "endpoint", "/admin/common/upload",
                 "suggestion", "If the user already has an uploaded image URL, it can be used in dish or setmeal create/update tools."
         );
+    }
+
+    private Object searchOperationalKnowledgePayload(JsonNode args) {
+        return knowledgeService.search(requiredText(args, "query"), parseInteger(args, "top_k", "topK"));
+    }
+
+    private Object readResourceDetailPayload(JsonNode args) {
+        return resourceCatalogService.readResource(requiredText(args, "uri"));
     }
 
     private Object fetchAllPages(PageFetcher fetcher) {

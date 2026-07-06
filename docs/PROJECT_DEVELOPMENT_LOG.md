@@ -95,13 +95,13 @@ sky-server
 - 最大上下文：262144；
 - 认证方式：`Authorization: Bearer <api-key>`。
 
-当前没有在 Java 工程中加入 LangChain4j、Spring AI 或其他 AI SDK。管理端和用户端 GX10 对话、健康检查与 Tool Calling 已使用 Java `HttpURLConnection` 和统一的 `AiToolCallingClient` 实现；AI 会话持久化和 RAG 仍待实现。
+当前后端同时使用原生 Java HTTP 调用和 LangChain4j 文档抽象。管理端和用户端 GX10 对话、健康检查与 Tool Calling 继续通过统一的 `AiToolCallingClient` 实现；当前已补齐面向管理端与用户端共享的业务知识检索链路，并提供只读资源目录桥接；AI 会话持久化、Embedding 和向量检索增强仍待实现。
 
 ## 4. 重要架构决策
 
 ### 4.1 使用独立 Vue 3 管理端
 
-原管理端是 Vue 2 + Vue CLI 工程。为承载新的 AI Agent 和品牌设计，新建 `sky-agent-admin-vue3`，不直接覆盖旧管理端，便于回退和对照功能。
+原管理端是 Vue 2 + Vue CLI 工程。为承载新的 AI Agent 和品牌设计，新建并演进为当前的 `admin-web` Vue 3 管理端，不直接覆盖旧管理端，便于回退和对照功能。
 
 ### 4.2 开发环境不依赖 Nginx
 
@@ -113,7 +113,7 @@ Vite 开发服务器负责接口代理：
     → http://localhost:8080/admin/**
 ```
 
-配置文件：`sky-agent-admin-vue3/vite.config.ts`。
+配置文件：`admin-web/vite.config.ts`。
 
 这样本地联调不需要 Nginx，也不需要额外配置后端 CORS。生产环境仍可选择 Nginx、容器网关或其他反向代理。
 
@@ -129,7 +129,7 @@ Vite 开发服务器负责接口代理：
 后端配置位于：
 
 ```text
-backend/sky-take-out/sky-server/src/main/resources/application.yml
+backend/sky-server/src/main/resources/application.yml
 ```
 
 支持的环境变量：
@@ -142,6 +142,9 @@ GX10_AI_CONNECT_TIMEOUT
 GX10_AI_READ_TIMEOUT
 GX10_AI_MAX_TOKENS
 GX10_AI_TEMPERATURE
+GX10_AI_RAG_ENABLED
+GX10_AI_RAG_TOP_K
+GX10_AI_MCP_ENABLED
 ```
 
 密钥禁止写入前端、接口响应或版本库。`gx10.txt` 当前含明文凭据，应该迁移为本机环境变量并从版本管理中排除。
@@ -286,12 +289,12 @@ icons/icon (2).png    外卖袋机器人图标
 
 - `AI_AGENT_API_REQUIREMENTS.json`：AI Agent 接口和安全需求；
 - `PROJECT_DEVELOPMENT_LOG.md`：长期开发记录；
-- `sky-agent-admin-vue3/`：新 Vue 3 管理端。
+- `admin-web/`：新 Vue 3 管理端。
 
 ### 8.2 新管理端
 
 ```text
-sky-agent-admin-vue3/
+admin-web/
 ├── package.json
 ├── package-lock.json
 ├── vite.config.ts
@@ -346,9 +349,10 @@ sky-agent-admin-vue3/
 | Redis | 已使用 | 缓存；未来用于会话或向量检索 |
 | Vite Proxy | 已使用 | 本地替代 Nginx 转发管理端请求 |
 | Nginx | 开发环境不需要 | 可用于生产静态部署和反向代理 |
-| GX10 vLLM | 已验证，待后端接入 | 大模型推理 |
-| LangChain4j | 未加入 | 可选 Agent/RAG 框架 |
+| GX10 vLLM | 已接入 | 大模型推理 |
+| LangChain4j | 已加入 | 企业知识文档抽象与轻量 RAG |
 | Spring AI | 未加入 | 可选 AI 客户端框架 |
+| MCP Bridge | 已加入 | 管理端只读能力目录与资源读取桥接 |
 
 ## 10. 验证基线
 
@@ -357,14 +361,14 @@ sky-agent-admin-vue3/
 ### 10.1 后端
 
 ```powershell
-cd backend\sky-take-out
+cd backend
 mvn compile -DskipTests
 ```
 
 ### 10.2 新管理端
 
 ```powershell
-cd sky-agent-admin-vue3
+cd admin-web
 npm.cmd exec vue-tsc -- --noEmit -p tsconfig.app.json
 ```
 
@@ -566,3 +570,32 @@ Get-Content -Raw -Encoding UTF8 AI_AGENT_API_REQUIREMENTS.json | ConvertFrom-Jso
 - 文件：`backend/sky-server/src/main/java/com/sky/service/impl/AdminAiChatServiceImpl.java`、`backend/sky-server/src/main/java/com/sky/service/impl/UserAiChatServiceImpl.java`、`backend/sky-server/src/main/java/com/sky/service/ai/admin/`、`backend/sky-server/src/main/java/com/sky/service/ai/user/`、`docs/agent.md`、`docs/PROJECT_DEVELOPMENT_LOG.md`；
 - 验证：`mvn clean compile -DskipTests` 通过；
 - 后续：同步更新 `USER_API_APIFOX.json` 与 `ADMIN_API_APIFOX.json` 的 AI tool 契约；将内存会话迁移到可持久化存储。
+
+### 2026-07-05 · 企业化 AI 升级：LangChain4j 文档检索与 MCP 风格能力目录
+
+- 范围：后端 AI、知识检索、文档归档；
+- 问题：`README`、`agent.md` 与开发记录对 AI 当前能力的描述不一致；后端缺少企业化知识检索层，平台规则、架构说明和交付边界无法被 AI 稳定引用；仓库也没有 MCP 形态的能力目录；
+- 改动：在 `sky-server` 中加入 LangChain4j 依赖，并基于 `Document` / `TextSegment` 落地本地文档分段检索；管理端新增 `list_knowledge_sources`、`search_knowledge_base`、`list_mcp_capabilities`、`read_mcp_resource` 四个只读工具；`/admin/ai/health` 额外返回 RAG 与 MCP 状态；同步修正 `docs/agent.md`、`docs/SKY_TAKE_OUT_FULL_PROJECT_README.md` 与本文档中关于用户端 Tool Calling、RAG、LangChain4j 与 MCP 的口径；
+- 方法：保持原有 `AiToolCallingClient + ToolRegistry + ToolExecutor` 主链路不变，仅在管理端追加“企业知识层”；RAG 采用本地文档切片与关键词排序，避免在未完成 embedding / 向量库选型前引入高耦合实现；MCP 先以只读、进程内 bridge 方式提供能力目录与资源读取，避免过早开放写操作；
+- 文件：`backend/sky-server/pom.xml`、`backend/sky-common/src/main/java/com/sky/properties/AiProperties.java`、`backend/sky-server/src/main/java/com/sky/service/ai/knowledge/EnterpriseKnowledgeBaseService.java`、`backend/sky-server/src/main/java/com/sky/service/ai/mcp/McpGatewayService.java`、`backend/sky-server/src/main/java/com/sky/service/ai/admin/AdminAiToolRegistry.java`、`backend/sky-server/src/main/java/com/sky/service/ai/admin/AdminAiToolExecutor.java`、`backend/sky-server/src/main/java/com/sky/service/impl/AdminAiChatServiceImpl.java`、`docs/agent.md`、`docs/SKY_TAKE_OUT_FULL_PROJECT_README.md`、`docs/PROJECT_DEVELOPMENT_LOG.md`；
+- 验证：`mvn compile -DskipTests` 通过；
+- 后续：将当前本地关键词检索升级为 embedding + 向量检索 + 重排；为用户侧整理正式客服知识语料；评估是否需要提供独立外部 MCP Server。
+
+### 2026-07-05 · 业务知识中心落地与 RAG 命名收口
+
+- 范围：后端 AI、知识检索、文档口径；
+- 问题：现有知识检索仍偏“技术演示”命名，类名和工具名带有 `Enterprise`、`KnowledgeBase`、`McpGateway` 等实现痕迹；用户端虽然具备 Tool Calling，但平台规则、配送说明、售后规则等问题没有正式接入共享知识检索链路；
+- 改动：将知识层重构为 `OperationsKnowledgeService` 与 `OperationsResourceCatalogService`，移除旧的 `EnterpriseKnowledgeBaseService`、`McpGatewayService` 文件；将管理端知识工具调整为 `list_operational_documents`、`search_operational_knowledge`、`list_resource_catalog`、`read_resource_detail`；新增用户端 `search_service_knowledge` 与 `read_service_resource`；在管理端和用户端对话主链路中自动注入知识检索上下文，形成“知识检索 + Tool Calling + SSE/非流式对话”的完整业务流程；
+- 方法：基于 LangChain4j `Document` / `TextSegment` 保留文档抽象层，引入按段落优先切片、多信号排序、文档域分类、术语提取和上下文拼装，不再把知识检索暴露为实验性质的文件命名；资源目录继续保持只读桥接，避免越权写操作；
+- 文件：`backend/sky-server/src/main/java/com/sky/service/ai/knowledge/OperationsKnowledgeService.java`、`backend/sky-server/src/main/java/com/sky/service/ai/mcp/OperationsResourceCatalogService.java`、`backend/sky-server/src/main/java/com/sky/service/ai/admin/AdminAiToolRegistry.java`、`backend/sky-server/src/main/java/com/sky/service/ai/admin/AdminAiToolExecutor.java`、`backend/sky-server/src/main/java/com/sky/service/ai/user/UserAiToolRegistry.java`、`backend/sky-server/src/main/java/com/sky/service/ai/user/UserAiToolExecutor.java`、`backend/sky-server/src/main/java/com/sky/service/impl/AdminAiChatServiceImpl.java`、`backend/sky-server/src/main/java/com/sky/service/impl/UserAiChatServiceImpl.java`、`docs/PROJECT_DEVELOPMENT_LOG.md`、`docs/SKY_TAKE_OUT_FULL_PROJECT_README.md`；
+- 验证：待执行 `mvn compile -DskipTests`；
+- 后续：继续升级为 embedding + 向量检索 + 重排，并补充知识源权限分层与持久化会话。
+### 2026-07-06 · User AI / Review / Moderation / Service Backend Closure
+
+- Scope: backend AI, review flow, sensitive-word moderation, customer service, database, and docs.
+- Added `backend/database/ai_review_service.sql` and implemented the corresponding entities, mappers, services, controllers, and MyBatis mappings.
+- Migrated user/admin AI sessions to database persistence with `ai_chat_session` and `ai_chat_message`.
+- Implemented `/user/ai/recommend`, `/user/ai/review/write`, `/user/dish/{id}/reviews`, `/user/review`, `/user/review/{id}/like`, `/user/review/{id}`, `/user/order/{orderId}/review/status`, `/user/service/**`, `/admin/service/**`, and `/admin/sensitive-word/**`.
+- Routed AI review drafting, review submission, and customer-service messages through sensitive-word checks.
+- Added session-title and last-message truncation guards to avoid MySQL data truncation when long model outputs are persisted, and widened `ai_chat_session.title` / `last_message` in SQL scripts.
+- Validation: `mvn compile` passed in `backend/`.

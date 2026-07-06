@@ -8,6 +8,8 @@ import com.sky.service.ai.AiToolCallingClient;
 import com.sky.service.ai.admin.AdminAiSessionManager;
 import com.sky.service.ai.admin.AdminAiToolExecutor;
 import com.sky.service.ai.admin.AdminAiToolRegistry;
+import com.sky.service.ai.knowledge.OperationsKnowledgeService;
+import com.sky.service.ai.mcp.OperationsResourceCatalogService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -37,6 +39,7 @@ public class AdminAiChatServiceImpl implements AdminAiChatService {
                     + "Backend tool results are authoritative JSON responses from admin controllers; interpret them directly instead of inventing extra fields. "
                     + "For any mutation such as create, update, delete, toggle, cancel, or password change, ask for explicit confirmation first. "
                     + "When the user has explicitly confirmed, call the mutation tool with confirmed=true. "
+                    + "For architecture, release history, platform policy, operating process, and AI workflow questions, prefer the operational knowledge and resource-catalog tools before answering. "
                     + "If the user asks about unsupported capabilities such as inventory ledgers, binary file upload from chat, refund finance ledgers, cross-database knowledge retrieval, or automated marketing execution, clearly state the current boundary.";
 
     private final AiProperties properties;
@@ -45,19 +48,25 @@ public class AdminAiChatServiceImpl implements AdminAiChatService {
     private final AdminAiToolRegistry toolRegistry;
     private final AdminAiToolExecutor toolExecutor;
     private final AdminAiSessionManager sessionManager;
+    private final OperationsKnowledgeService knowledgeService;
+    private final OperationsResourceCatalogService resourceCatalogService;
 
     public AdminAiChatServiceImpl(AiProperties properties,
                                   com.fasterxml.jackson.databind.ObjectMapper objectMapper,
                                   AiToolCallingClient toolCallingClient,
                                   AdminAiToolRegistry toolRegistry,
                                   AdminAiToolExecutor toolExecutor,
-                                  AdminAiSessionManager sessionManager) {
+                                  AdminAiSessionManager sessionManager,
+                                  OperationsKnowledgeService knowledgeService,
+                                  OperationsResourceCatalogService resourceCatalogService) {
         this.properties = properties;
         this.objectMapper = objectMapper;
         this.toolCallingClient = toolCallingClient;
         this.toolRegistry = toolRegistry;
         this.toolExecutor = toolExecutor;
         this.sessionManager = sessionManager;
+        this.knowledgeService = knowledgeService;
+        this.resourceCatalogService = resourceCatalogService;
     }
 
     @Override
@@ -129,6 +138,8 @@ public class AdminAiChatServiceImpl implements AdminAiChatService {
 
         result.put("latencyMs", System.currentTimeMillis() - startedAt);
         result.put("checkedAt", LocalDateTime.now().toString());
+        result.put("knowledge", knowledgeService.health());
+        result.put("resourceCatalog", resourceCatalogService.health());
         return result;
     }
 
@@ -137,7 +148,7 @@ public class AdminAiChatServiceImpl implements AdminAiChatService {
         long startedAt = System.currentTimeMillis();
         try {
             BaseContext.setCurrentId(employeeId);
-            String answer = callCompletion(session);
+            String answer = callCompletion(session, message);
             sessionManager.appendMessage(session, "assistant", answer);
             sessionManager.touchSession(session, answer);
             send(emitter, "meta", mapOf("sessionId", session.getId(), "provider", "vllm", "model", properties.getModel()), closed);
@@ -158,9 +169,14 @@ public class AdminAiChatServiceImpl implements AdminAiChatService {
         }
     }
 
-    private String callCompletion(AdminAiSessionManager.ChatSession session) throws Exception {
+    private String callCompletion(AdminAiSessionManager.ChatSession session, String latestMessage) throws Exception {
+        String knowledgeContext = knowledgeService.buildGroundingContext(latestMessage, 3);
+        String systemPrompt = SYSTEM_PROMPT + TOOL_POLICY;
+        if (StringUtils.hasText(knowledgeContext)) {
+            systemPrompt = systemPrompt + "\n\n" + knowledgeContext;
+        }
         return toolCallingClient.complete(
-                SYSTEM_PROMPT + TOOL_POLICY,
+                systemPrompt,
                 sessionManager.history(session),
                 toolRegistry.adminTools(),
                 toolExecutor::execute

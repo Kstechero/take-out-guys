@@ -95,13 +95,13 @@ sky-server
 - 最大上下文：262144；
 - 认证方式：`Authorization: Bearer <api-key>`。
 
-当前没有在 Java 工程中加入 LangChain4j、Spring AI 或其他 AI SDK。管理端和用户端 GX10 对话、健康检查与 Tool Calling 均基于原生 Java HTTP 调用实现。`/admin/ai/**` 与 `/user/ai/**` 当前都只保留 LLM 对话与 tool calling 主链路，旧的固定回答、关键词触发和直连流式分支已移除。两端工具统一返回结构化 JSON，管理端列表工具支持 `all=true` 以便后端自动分页拉取全量结果。AI 服务端代码已按 `ServiceImpl 编排层 + ToolRegistry + ToolExecutor + SessionManager` 的结构拆分；会话持久化和 RAG 仍待实现。
+当前后端同时使用原生 Java HTTP 调用和 LangChain4j 文档抽象。`/admin/ai/**` 与 `/user/ai/**` 当前都只保留 LLM 对话与 tool calling 主链路，旧的固定回答、关键词触发和直连流式分支已移除。两端工具统一返回结构化 JSON，管理端列表工具支持 `all=true` 以便后端自动分页拉取全量结果。当前已补齐共享业务知识检索链路，并保留只读的资源目录桥接；AI 服务端代码按 `ServiceImpl 编排层 + ToolRegistry + ToolExecutor + SessionManager` 的结构拆分。会话持久化、Embedding 与向量检索增强仍待实现。
 
 ## 4. 重要架构决策
 
 ### 4.1 使用独立 Vue 3 管理端
 
-原管理端是 Vue 2 + Vue CLI 工程。为承载新的 AI Agent 和品牌设计，新建 `sky-agent-admin-vue3`，不直接覆盖旧管理端，便于回退和对照功能。
+原管理端是 Vue 2 + Vue CLI 工程。为承载新的 AI Agent 和品牌设计，新建并演进为当前的 `admin-web` Vue 3 管理端，不直接覆盖旧管理端，便于回退和对照功能。
 
 ### 4.2 开发环境不依赖 Nginx
 
@@ -113,7 +113,7 @@ Vite 开发服务器负责接口代理：
     → http://localhost:8080/admin/**
 ```
 
-配置文件：`sky-agent-admin-vue3/vite.config.ts`。
+配置文件：`admin-web/vite.config.ts`。
 
 这样本地联调不需要 Nginx，也不需要额外配置后端 CORS。生产环境仍可选择 Nginx、容器网关或其他反向代理。
 
@@ -129,7 +129,7 @@ Vite 开发服务器负责接口代理：
 后端配置位于：
 
 ```text
-backend/sky-take-out/sky-server/src/main/resources/application.yml
+backend/sky-server/src/main/resources/application.yml
 ```
 
 支持的环境变量：
@@ -142,6 +142,9 @@ GX10_AI_CONNECT_TIMEOUT
 GX10_AI_READ_TIMEOUT
 GX10_AI_MAX_TOKENS
 GX10_AI_TEMPERATURE
+GX10_AI_RAG_ENABLED
+GX10_AI_RAG_TOP_K
+GX10_AI_MCP_ENABLED
 ```
 
 密钥禁止写入前端、接口响应或版本库。`gx10.txt` 当前含明文凭据，应该迁移为本机环境变量并从版本管理中排除。
@@ -180,6 +183,7 @@ AI Agent 不直接操作 Mapper 或数据库。订单查询、订单取消、菜
 - 经营总览；
 - 数据统计；
 - AI Agent 工作台；
+- 企业知识检索与 MCP 能力目录；
 - 订单管理；
 - 菜品管理；
 - 分类管理；
@@ -287,12 +291,12 @@ icons/icon (2).png    外卖袋机器人图标
 - `USER_API_APIFOX.json`：用户端及支付回调接口；
 - `ADMIN_API_APIFOX.json`：管理端接口（包括已实现的 AI 接口）；
 - `PROJECT_DEVELOPMENT_LOG.md`：每日开发日志；
-- `sky-agent-admin-vue3/`：新 Vue 3 管理端。
+- `admin-web/`：新 Vue 3 管理端。
 
 ### 8.2 新管理端
 
 ```text
-sky-agent-admin-vue3/
+admin-web/
 ├── package.json
 ├── package-lock.json
 ├── vite.config.ts
@@ -320,9 +324,11 @@ sky-agent-admin-vue3/
 
 ### 8.3 后端配置
 
-- `backend/sky-take-out/sky-server/src/main/resources/application.yml`
+- `backend/sky-server/src/main/resources/application.yml`
   - 新增 `sky.ai` 配置；
-  - 支持 GX10 URL、Key、模型、超时、温度和最大输出 Token。
+  - 支持 GX10 URL、Key、模型、超时、温度和最大输出 Token；
+  - 新增 `sky.ai.rag.*` 企业知识检索配置；
+  - 新增 `sky.ai.mcp.*` MCP 风格能力目录配置。
 
 ## 9. 依赖与中间件登记
 
@@ -347,9 +353,10 @@ sky-agent-admin-vue3/
 | Redis | 已使用 | 缓存；未来用于会话或向量检索 |
 | Vite Proxy | 已使用 | 本地替代 Nginx 转发管理端请求 |
 | Nginx | 开发环境不需要 | 可用于生产静态部署和反向代理 |
-| GX10 vLLM | 已验证，待后端接入 | 大模型推理 |
-| LangChain4j | 未加入 | 可选 Agent/RAG 框架 |
+| GX10 vLLM | 已接入 | 大模型推理 |
+| LangChain4j | 已加入 | 企业知识文档抽象与轻量 RAG |
 | Spring AI | 未加入 | 可选 AI 客户端框架 |
+| MCP Bridge | 已加入 | 管理端只读能力目录与资源读取桥接 |
 
 ## 10. 验证基线
 
@@ -358,14 +365,14 @@ sky-agent-admin-vue3/
 ### 10.1 后端
 
 ```powershell
-cd backend\sky-take-out
+cd backend
 mvn compile -DskipTests
 ```
 
 ### 10.2 新管理端
 
 ```powershell
-cd sky-agent-admin-vue3
+cd admin-web
 npm.cmd exec vue-tsc -- --noEmit -p tsconfig.app.json
 ```
 
@@ -400,17 +407,18 @@ Get-Content -Raw -Encoding UTF8 ADMIN_API_APIFOX.json | ConvertFrom-Json | Out-N
 ### P0
 
 1. AI 会话和消息持久化；
-2. RAG 知识库；
+2. AI 会话持久化；
 3. AI 推荐结果回查与正式业务闭环；
 4. 同步更新 `USER_API_APIFOX.json` 与 `ADMIN_API_APIFOX.json` 中新增 AI tool calling 契约；
-5. 完善套餐新增表单和套餐菜品组合表单。
+5. 完善套餐新增表单和套餐菜品组合表单；
+6. 向量检索、Embedding 与用户侧正式知识库。
 
 ### P1
 
 1. AI 会话和消息表；
 2. AI 菜品推荐；
 3. AI 评价帮写；
-4. RAG 知识库；
+4. 用户侧客服规则知识库；
 5. 菜品评价模块；
 6. 优惠券模块；
 7. 敏感词模块；
@@ -419,10 +427,19 @@ Get-Content -Raw -Encoding UTF8 ADMIN_API_APIFOX.json | ConvertFrom-Json | Out-N
 
 ### 已知限制
 
-- 管理端 AI 页面已有前端协议，但后端接口未实现；
+- 管理端 AI 已实现后端接口，并新增只读企业知识检索与 MCP 风格能力目录；当前尚未提供独立的外部 MCP Server，也未开放写操作型 MCP 工具；
 - 用户端与管理端 AI 会话当前仅保存在服务进程内存中，多实例部署下不会共享；
 - GX10 推理模型可能返回 `reasoning_content`，最终用户响应只应展示 `content`；
 - 推理模型使用过小的 `max_tokens` 可能在正文生成前以 `length` 结束；
 - `gx10.txt` 含明文凭据，存在安全风险；
+- 当前 RAG 为本地文档分段与关键词排序实现，尚未接入 embedding、向量库、重排器和权限分层知识源；
 - 菜品新增表单已经支持图片上传、分类和口味；套餐新增仍需实现套餐菜品组合表单；
 - 优惠券、评价、敏感词和客服页面目前没有对应后端 Controller。
+### 2026-07-06 Update
+
+- Added `backend/database/ai_review_service.sql` for `ai_chat_session`, `ai_chat_message`, `dish_review`, `dish_review_like`, `sensitive_word`, `customer_service_session`, and `customer_service_message`.
+- Moved both user-side and admin-side AI sessions from in-memory storage to database persistence.
+- Implemented `/user/ai/recommend` and `/user/ai/review/write`, and routed AI-generated review text through sensitive-word moderation.
+- Implemented user review submit/list/like/delete/status APIs, human customer service user/admin APIs, and admin sensitive-word CRUD/check APIs.
+- Added AI session storage truncation guards for `title` and `last_message`, and widened the corresponding SQL column definitions for new environments.
+- Verified the backend build with `mvn compile` under `backend/`.
