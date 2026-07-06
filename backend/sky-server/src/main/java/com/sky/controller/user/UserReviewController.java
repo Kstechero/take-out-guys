@@ -1,5 +1,6 @@
 package com.sky.controller.user;
 
+import com.sky.dto.ReviewPageQueryDTO;
 import com.sky.dto.ReviewSubmitDTO;
 import com.sky.result.PageResult;
 import com.sky.result.Result;
@@ -26,6 +27,12 @@ public class UserReviewController {
 
     public UserReviewController(ReviewService reviewService) {
         this.reviewService = reviewService;
+    }
+
+    @GetMapping("/review/page")
+    @ApiOperation("分页查询当前用户评价")
+    public Result<PageResult> page(ReviewPageQueryDTO queryDTO) {
+        return Result.success(reviewService.pageByCurrentUser(queryDTO));
     }
 
     @GetMapping("/dish/{id}/reviews")

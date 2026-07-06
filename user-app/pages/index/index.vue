@@ -193,6 +193,33 @@
 				<view class="desc">
 					{{dishDetailes.description}}
 				</view>
+				<view class="detail-review-block">
+					<view class="detail-review-head">
+						<view class="detail-review-heading">
+							<text class="detail-review-title">用户评价</text>
+							<text class="detail-review-sub">{{ previewReviewCountText() }}</text>
+						</view>
+						<text class="detail-review-link" @click="goDishReviews">查看全部</text>
+					</view>
+					<view v-if="detailReviewLoading" class="detail-review-empty">正在加载评价...</view>
+					<view v-else-if="detailReviewList.length">
+						<view class="detail-review-card" v-for="item in detailReviewList" :key="item.id">
+							<view class="detail-review-meta">
+								<text class="detail-review-user">{{ item.userName || '匿名用户' }}</text>
+								<text class="detail-review-rating">{{ reviewStars(item.rating) }}</text>
+							</view>
+							<view class="detail-review-content">{{ item.content }}</view>
+							<view v-if="item.images && item.images.length" class="detail-review-images">
+								<image v-for="(img, index) in item.images.slice(0, 3)" :key="`${item.id}-${index}`" :src="getNewImage(img)" mode="aspectFill"></image>
+							</view>
+							<view class="detail-review-foot">
+								<text>{{ formatReviewTime(item.createTime) }}</text>
+								<text>{{ item.likeCount || 0 }} 赞</text>
+							</view>
+						</view>
+					</view>
+					<view v-else class="detail-review-empty">这道菜还没有评价，点单后来当第一位分享的人吧。</view>
+				</view>
 				<view class="but_item">
 					<view class="price">
 						 <text class="ico"> ￥ </text> {{dishDetailes.price}}

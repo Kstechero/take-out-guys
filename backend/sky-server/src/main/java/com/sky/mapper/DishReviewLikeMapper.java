@@ -11,4 +11,6 @@ public interface DishReviewLikeMapper {
     void insert(DishReviewLike reviewLike);
 
     void deleteById(@Param("id") Long id);
+
+    void deleteByReviewId(@Param("reviewId") Long reviewId);
 }

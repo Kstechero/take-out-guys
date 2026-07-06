@@ -1014,11 +1014,16 @@ DELETE /user/ai/session/{sessionId}
 ```text
 GET  /user/dish/{id}
 GET  /user/dish/{id}/reviews
+GET  /user/review/page
 POST /user/review
 POST /user/review/{id}/like
 DELETE /user/review/{id}
 GET  /user/order/{orderId}/review/status
 ```
+
+Current frontend status:
+- The user mini-program now shows real review previews inside the dish-detail popup.
+- A dedicated dish-review page loads paginated review records, supports image preview, and allows users to like or unlike a review.
 
 ## 13.3 优惠券接口
 
@@ -1051,12 +1056,21 @@ POST /admin/service/session/end
 ## 13.5 敏感词接口
 
 ```text
+GET  /admin/review/page
+PUT  /admin/review/{id}/status/{status}
+DELETE /admin/review/{id}
+
 POST /admin/sensitive-word
 GET  /admin/sensitive-word/page
 PUT  /admin/sensitive-word/{id}
 DELETE /admin/sensitive-word/batch
 POST /admin/sensitive-word/check
 ```
+
+Current admin status:
+- The admin console now includes a real review-management page instead of placeholder review data.
+- Review moderation supports keyword filtering, status filtering, detail viewing, hide/restore actions, and delete actions.
+- Sensitive-word management is available in both the admin UI and the admin AI tool layer.
 
 ## 13.6 堂食接口
 

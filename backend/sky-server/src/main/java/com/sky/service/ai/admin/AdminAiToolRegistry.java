@@ -151,6 +151,22 @@ public class AdminAiToolRegistry {
                 ), "uri"));
         tools.add(AiToolCallingClient.tool("describe_upload_capability", "Explain the current chat boundary for admin file upload",
                 Collections.emptyMap()));
+        tools.add(AiToolCallingClient.tool("query_sensitive_words", "Query sensitive words",
+                mapOf(
+                        "word", AiToolCallingClient.stringProperty("Sensitive word keyword"),
+                        "status", AiToolCallingClient.stringProperty("Status: enabled or disabled"),
+                        "page", integerProperty("Page number, default 1"),
+                        "page_size", integerProperty("Page size for paged mode"),
+                        "all", AiToolCallingClient.booleanProperty("Whether to fetch all matched records")
+                )));
+        tools.add(AiToolCallingClient.tool("manage_sensitive_word", "Create, update, or delete sensitive words after explicit confirmation",
+                mapOf(
+                        "action", AiToolCallingClient.stringProperty("Action: create, update, delete"),
+                        "sensitive_word_id", integerProperty("Sensitive word ID for update or delete"),
+                        "sensitive_word_ids", longArrayProperty("Sensitive word IDs for batch delete"),
+                        "payload", sensitiveWordPayloadProperty(),
+                        "confirmed", AiToolCallingClient.booleanProperty("Must be true only after the user explicitly confirms the mutation")
+                ), "action", "confirmed"));
         return tools;
     }
 
@@ -238,6 +254,15 @@ public class AdminAiToolRegistry {
                         "additionalProperties", true
                 ))
         ), "additionalProperties", true);
+    }
+
+    private Map<String, Object> sensitiveWordPayloadProperty() {
+        return mapOf("type", "object", "description", "Sensitive word payload", "properties", mapOf(
+                "word", AiToolCallingClient.stringProperty("Sensitive word text"),
+                "level", integerProperty("Severity level"),
+                "replacement", AiToolCallingClient.stringProperty("Replacement content, default ***"),
+                "status", AiToolCallingClient.stringProperty("Status: enabled or disabled")
+        ), "additionalProperties", false);
     }
 
     private Map<String, Object> mapOf(Object... values) {

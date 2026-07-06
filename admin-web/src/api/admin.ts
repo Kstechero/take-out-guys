@@ -38,6 +38,22 @@ export const replyServiceMessage = (data: { sessionId: number; content: string; 
 export const endServiceSession = (sessionId: number) =>
   request.post('/service/session/end', { sessionId })
 
+export interface ReviewPageParams {
+  page: number
+  pageSize: number
+  keyword?: string
+  status?: number
+}
+
+export const getReviewPage = (params: ReviewPageParams) =>
+  request.get('/review/page', { params })
+
+export const updateReviewStatus = (id: number, status: number) =>
+  request.put(`/review/${id}/status/${status}`)
+
+export const deleteReview = (id: number) =>
+  request.delete(`/review/${id}`)
+
 export interface CouponPayload {
   name: string
   type: number
@@ -55,3 +71,16 @@ export const getCouponPage = (params: { page: number; pageSize: number; name?: s
 export const createCoupon = (data: CouponPayload) => request.post('/coupon', data)
 export const updateCoupon = (id: number, data: CouponPayload) => request.put(`/coupon/${id}`, data)
 export const deleteCoupon = (id: number) => request.delete(`/coupon/${id}`)
+
+export interface SensitiveWordPayload {
+  word: string
+  level?: number
+  replacement?: string
+  status?: number
+}
+
+export const getSensitiveWordPage = (params: { page: number; pageSize: number; word?: string; status?: number }) =>
+  request.get('/sensitive-word/page', { params })
+export const createSensitiveWord = (data: SensitiveWordPayload) => request.post('/sensitive-word', data)
+export const updateSensitiveWord = (id: number, data: SensitiveWordPayload) => request.put(`/sensitive-word/${id}`, data)
+export const deleteSensitiveWords = (ids: number[]) => request.delete('/sensitive-word/batch', { params: { ids: ids.join(',') } })

@@ -683,6 +683,92 @@ $desc-font-color: #818693;
         text-align: center;
         font-weight: bold;
       }
+      .desc {
+        font-size: 24rpx;
+        line-height: 38rpx;
+        color: #666666;
+      }
+      .detail-review-block {
+        margin-top: 24rpx;
+        padding: 24rpx;
+        border-radius: 20rpx;
+        background: #f7f6f2;
+        .detail-review-head {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 20rpx;
+        }
+        .detail-review-heading {
+          display: flex;
+          flex-direction: column;
+          gap: 8rpx;
+        }
+        .detail-review-title {
+          font-size: 30rpx;
+          font-weight: 600;
+          color: #182232;
+        }
+        .detail-review-sub {
+          font-size: 22rpx;
+          color: #8b938e;
+        }
+        .detail-review-link {
+          font-size: 24rpx;
+          color: #ff4b12;
+          font-weight: 600;
+        }
+        .detail-review-empty {
+          margin-top: 18rpx;
+          font-size: 24rpx;
+          line-height: 38rpx;
+          color: #8b938e;
+        }
+        .detail-review-card {
+          margin-top: 18rpx;
+          padding: 20rpx;
+          border-radius: 18rpx;
+          background: #ffffff;
+        }
+        .detail-review-meta,
+        .detail-review-foot {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12rpx;
+        }
+        .detail-review-user {
+          font-size: 24rpx;
+          font-weight: 600;
+          color: #182232;
+        }
+        .detail-review-rating {
+          font-size: 22rpx;
+          color: #ff4b12;
+          letter-spacing: 2rpx;
+        }
+        .detail-review-content {
+          margin-top: 12rpx;
+          font-size: 24rpx;
+          line-height: 38rpx;
+          color: #4e5651;
+        }
+        .detail-review-images {
+          display: flex;
+          gap: 12rpx;
+          margin-top: 14rpx;
+          image {
+            width: 112rpx;
+            height: 112rpx;
+            border-radius: 16rpx;
+          }
+        }
+        .detail-review-foot {
+          margin-top: 14rpx;
+          font-size: 20rpx;
+          color: #8b938e;
+        }
+      }
       .dish_items {
         height: 60vh;
       }

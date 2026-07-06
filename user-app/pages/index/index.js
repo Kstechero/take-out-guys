@@ -30,7 +30,8 @@ import
 		// 清空购物车
 		delShoppingCart,
 		// 此接口为首页查询套餐详情展示的接口
-		querySetmealDishById
+		querySetmealDishById,
+		queryDishReviews
 	} from '../api/api.js'
 import initWebScoket from '../../utils/webscoket'
 import {mapState, mapMutations, mapActions} from 'vuex'
@@ -68,6 +69,10 @@ export default {
 			// 菜品金额
 			orderDishPrice: 0,
 			selectedFlavorInCart: false,
+			detailReviewLoading: false,
+			detailReviewList: [],
+			detailReviewTotal: 0,
+			detailReviewPageSize: 3,
 			params: {
 				shopId: 'f3deb',
 				storeId: '1282344676983062530',
@@ -400,6 +405,8 @@ export default {
 		// 打开菜品牌详情
 		openDetailHandle (item) {
 			this.dishDetailes = item
+			this.detailReviewList = []
+			this.detailReviewTotal = 0
 			if (item.type === 2) {
 				querySetmealDishById({ id: item.id }).then(res => {
 					console.log(res)
@@ -417,7 +424,46 @@ export default {
 				// })
 			} else {
 				this.openDetailPop = true
+				this.loadDishReviewPreview(item.id)
 			}
+		},
+		async loadDishReviewPreview (dishId) {
+			if (!dishId) {
+				this.detailReviewList = []
+				this.detailReviewTotal = 0
+				return
+			}
+			this.detailReviewLoading = true
+			try {
+				const res = await queryDishReviews(dishId, { page: 1, pageSize: this.detailReviewPageSize })
+				const payload = res && res.data ? res.data : {}
+				this.detailReviewList = Array.isArray(payload.records) ? payload.records : []
+				this.detailReviewTotal = Number(payload.total || 0)
+			} catch (err) {
+				this.detailReviewList = []
+				this.detailReviewTotal = 0
+			} finally {
+				this.detailReviewLoading = false
+			}
+		},
+		previewReviewCountText () {
+			if (this.detailReviewLoading) return '正在加载评价'
+			if (this.detailReviewTotal > 0) return `${this.detailReviewTotal}条真实评价`
+			return '暂无用户评价'
+		},
+		reviewStars (rating) {
+			const count = Math.max(0, Math.min(5, Number(rating || 0)))
+			return '★'.repeat(count) + '☆'.repeat(5 - count)
+		},
+		formatReviewTime (value) {
+			if (!value) return '刚刚'
+			return String(value).replace('T', ' ').slice(0, 16)
+		},
+		goDishReviews () {
+			if (!this.dishDetailes || !this.dishDetailes.id) return
+			uni.navigateTo({
+				url: `/pages/dish-reviews/index?dishId=${this.dishDetailes.id}&name=${encodeURIComponent(this.dishDetailes.name || '')}&image=${encodeURIComponent(this.dishDetailes.image || '')}`
+			})
 		},
 		// 多规格数据处理
 		moreNormDataesHandle (item) {

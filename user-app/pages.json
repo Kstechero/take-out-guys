@@ -97,6 +97,15 @@
       }
     },
     {
+      "path": "pages/dish-reviews/index",
+      "style": {
+        "navigationBarTitleText": "菜品评价",
+        "enablePullDownRefresh": true,
+        "navigationBarBackgroundColor": "#101a2a",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
       "path": "pages/coupon/index",
       "style": {
         "navigationBarTitleText": "优惠券中心",

@@ -174,6 +174,9 @@ public class UserAiChatServiceImpl implements UserAiChatService {
         if (order == null || !userId.equals(order.getUserId())) {
             throw new IllegalArgumentException("订单不存在");
         }
+        if (!Orders.COMPLETED.equals(order.getStatus())) {
+            throw new IllegalArgumentException("仅已完成订单可使用 AI 帮写评价");
+        }
         List<OrderDetail> details = orderDetailMapper.getByOrderId(request.getOrderId());
         StringBuilder dishes = new StringBuilder();
         for (OrderDetail detail : details) {

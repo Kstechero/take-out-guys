@@ -13,4 +13,8 @@
     <delete id="deleteById">
         delete from dish_review_like where id = #{id}
     </delete>
+
+    <delete id="deleteByReviewId">
+        delete from dish_review_like where review_id = #{reviewId}
+    </delete>
 </mapper>

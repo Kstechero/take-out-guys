@@ -6,6 +6,7 @@ import com.sky.controller.admin.CategoryController;
 import com.sky.controller.admin.CouponController;
 import com.sky.controller.admin.DishController;
 import com.sky.controller.admin.EmployeeController;
+import com.sky.controller.admin.AdminSensitiveWordController;
 import com.sky.controller.admin.OrderController;
 import com.sky.controller.admin.ReportController;
 import com.sky.controller.admin.SetmealController;
@@ -24,6 +25,8 @@ import com.sky.dto.OrdersConfirmDTO;
 import com.sky.dto.OrdersPageQueryDTO;
 import com.sky.dto.OrdersRejectionDTO;
 import com.sky.dto.PasswordEditDTO;
+import com.sky.dto.SensitiveWordDTO;
+import com.sky.dto.SensitiveWordPageQueryDTO;
 import com.sky.dto.SetmealDTO;
 import com.sky.dto.SetmealPageQueryDTO;
 import com.sky.entity.Category;
@@ -63,6 +66,7 @@ public class AdminAiToolExecutor {
     private final SetmealController setmealController;
     private final CategoryController categoryController;
     private final EmployeeController employeeController;
+    private final AdminSensitiveWordController sensitiveWordController;
     private final WorkspaceController workspaceController;
     private final ReportController reportController;
     private final OperationsKnowledgeService knowledgeService;
@@ -76,6 +80,7 @@ public class AdminAiToolExecutor {
                                SetmealController setmealController,
                                CategoryController categoryController,
                                EmployeeController employeeController,
+                               AdminSensitiveWordController sensitiveWordController,
                                WorkspaceController workspaceController,
                                ReportController reportController,
                                OperationsKnowledgeService knowledgeService,
@@ -88,6 +93,7 @@ public class AdminAiToolExecutor {
         this.setmealController = setmealController;
         this.categoryController = categoryController;
         this.employeeController = employeeController;
+        this.sensitiveWordController = sensitiveWordController;
         this.workspaceController = workspaceController;
         this.reportController = reportController;
         this.knowledgeService = knowledgeService;
@@ -142,6 +148,10 @@ public class AdminAiToolExecutor {
                 return json(readResourceDetailPayload(args));
             case "describe_upload_capability":
                 return json(describeUploadCapabilityPayload());
+            case "query_sensitive_words":
+                return json(querySensitiveWordsPayload(args));
+            case "manage_sensitive_word":
+                return json(manageSensitiveWordPayload(args));
             default:
                 throw new IllegalArgumentException("Unknown admin tool: " + name);
         }
@@ -497,6 +507,48 @@ public class AdminAiToolExecutor {
         );
     }
 
+    private Object querySensitiveWordsPayload(JsonNode args) {
+        SensitiveWordPageQueryDTO queryDTO = new SensitiveWordPageQueryDTO();
+        queryDTO.setWord(textArg(args, "word"));
+        queryDTO.setStatus(parseEnabledStatus(textArg(args, "status")));
+
+        if (booleanArg(args, false, "all")) {
+            return fetchAllPages((page, pageSize) -> {
+                queryDTO.setPage(page);
+                queryDTO.setPageSize(pageSize);
+                return sensitiveWordController.page(queryDTO);
+            });
+        }
+
+        queryDTO.setPage(intArg(args, 1, "page"));
+        queryDTO.setPageSize(clamp(intArg(args, 20, "page_size", "pageSize"), 1, MAX_QUERY_PAGE_SIZE));
+        return sensitiveWordController.page(queryDTO);
+    }
+
+    private Object manageSensitiveWordPayload(JsonNode args) {
+        requireConfirmed(args);
+        String action = normalize(args.path("action").asText());
+
+        if ("create".equals(action)) {
+            SensitiveWordDTO dto = buildSensitiveWordDTO(requiredObject(args, "payload"));
+            return mapOf("operation", sensitiveWordController.save(dto), "query", querySensitiveWordsPayload(args));
+        }
+        if ("update".equals(action)) {
+            Long sensitiveWordId = requiredLong(args, "sensitive_word_id", "sensitiveWordId");
+            SensitiveWordDTO dto = buildSensitiveWordDTO(requiredObject(args, "payload"));
+            return mapOf("operation", sensitiveWordController.update(sensitiveWordId, dto), "query", querySensitiveWordsPayload(args));
+        }
+        if ("delete".equals(action)) {
+            List<Long> ids = parseLongList(args, "sensitive_word_ids");
+            if (ids.isEmpty()) {
+                ids = Collections.singletonList(requiredLong(args, "sensitive_word_id", "sensitiveWordId"));
+            }
+            return mapOf("operation", sensitiveWordController.delete(ids.toArray(new Long[0])), "query", querySensitiveWordsPayload(args));
+        }
+
+        throw new IllegalArgumentException("action must be create, update, or delete");
+    }
+
     private Object searchOperationalKnowledgePayload(JsonNode args) {
         return knowledgeService.search(requiredText(args, "query"), parseInteger(args, "top_k", "topK"));
     }
@@ -648,6 +700,15 @@ public class AdminAiToolExecutor {
         dto.setDescription(textArg(payload, "description"));
         dto.setStatus(optionalEnabledStatus(payload, "status"));
         dto.setSetmealDishes(parseSetmealDishes(payload.path("setmeal_dishes"), payload.path("setmealDishes")));
+        return dto;
+    }
+
+    private SensitiveWordDTO buildSensitiveWordDTO(JsonNode payload) {
+        SensitiveWordDTO dto = new SensitiveWordDTO();
+        dto.setWord(requiredText(payload, "word"));
+        dto.setLevel(parseInteger(payload, "level"));
+        dto.setReplacement(textArg(payload, "replacement"));
+        dto.setStatus(optionalEnabledStatus(payload, "status"));
         return dto;
     }
 

@@ -6,6 +6,71 @@
         values(#{userId}, #{orderId}, #{dishId}, #{rating}, #{content}, #{images}, #{likeCount}, #{status}, #{aiGenerated}, #{createTime}, #{updateTime})
     </insert>
 
+    <select id="pageForAdmin" resultType="com.sky.vo.AdminReviewPageVO">
+        select r.id,
+               r.user_id as userId,
+               u.name as userName,
+               r.order_id as orderId,
+               o.number as orderNumber,
+               r.dish_id as dishId,
+               d.name as dishName,
+               d.image as dishImage,
+               r.rating,
+               r.content,
+               r.images as imagesJson,
+               r.like_count as likeCount,
+               r.status,
+               r.ai_generated as aiGenerated,
+               r.create_time as createTime,
+               r.update_time as updateTime
+        from dish_review r
+        left join user u on u.id = r.user_id
+        left join orders o on o.id = r.order_id
+        left join dish d on d.id = r.dish_id
+        <where>
+            <if test="queryDTO != null and queryDTO.status != null">
+                r.status = #{queryDTO.status}
+            </if>
+            <if test="queryDTO != null and queryDTO.keyword != null and queryDTO.keyword != ''">
+                and (
+                    r.content like concat('%', #{queryDTO.keyword}, '%')
+                    or u.name like concat('%', #{queryDTO.keyword}, '%')
+                    or d.name like concat('%', #{queryDTO.keyword}, '%')
+                    or o.number like concat('%', #{queryDTO.keyword}, '%')
+                )
+            </if>
+        </where>
+        order by r.create_time desc, r.id desc
+    </select>
+
+    <select id="pageByUserId" resultType="com.sky.vo.UserReviewPageVO">
+        select r.id,
+               r.order_id as orderId,
+               o.number as orderNumber,
+               r.dish_id as dishId,
+               d.name as dishName,
+               d.image as dishImage,
+               r.rating,
+               r.content,
+               r.images as imagesJson,
+               r.like_count as likeCount,
+               r.status,
+               r.ai_generated as aiGenerated,
+               r.create_time as createTime,
+               r.update_time as updateTime
+        from dish_review r
+        left join orders o on o.id = r.order_id
+        left join dish d on d.id = r.dish_id
+        where r.user_id = #{userId}
+        <if test="queryDTO != null and queryDTO.orderId != null">
+            and r.order_id = #{queryDTO.orderId}
+        </if>
+        <if test="queryDTO != null and queryDTO.dishId != null">
+            and r.dish_id = #{queryDTO.dishId}
+        </if>
+        order by r.create_time desc, r.id desc
+    </select>
+
     <select id="pageByDishId" resultType="com.sky.vo.DishReviewVO">
         select r.id,
                r.order_id as orderId,
@@ -40,6 +105,13 @@
     <delete id="deleteById">
         delete from dish_review where id = #{id}
     </delete>
+
+    <update id="updateStatus">
+        update dish_review
+        set status = #{status},
+            update_time = #{updateTime}
+        where id = #{id}
+    </update>
 
     <update id="updateLikeCount">
         update dish_review

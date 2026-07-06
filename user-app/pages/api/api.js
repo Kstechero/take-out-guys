@@ -26,9 +26,11 @@ export const cancelUserOrder = id => request({ url: `/user/order/cancel/${id}`, 
 export const oneOrderAgain = params => request({ url: `/user/order/repetition/${params.id}`, method: 'POST' })
 export const remindOrder = id => request({ url: `/user/order/reminder/${id}` })
 
-// 客户评价（前端已接入，后端模块待实现）
+// 客户评价
 export const submitReview = params => request({ url: '/user/review', method: 'POST', params, showError: false })
 export const queryUserReviews = params => request({ url: '/user/review/page', params, showError: false })
+export const queryDishReviews = (dishId, params = {}) => request({ url: `/user/dish/${dishId}/reviews`, params, showError: false })
+export const toggleReviewLike = id => request({ url: `/user/review/${id}/like`, method: 'POST', showError: false })
 
 // 地址
 export const queryAddressBookList = () => request({ url: '/user/addressBook/list' })
@@ -45,7 +47,7 @@ export const receiveCoupon = couponId => request({ url: `/user/coupon/receive/${
 export const getMyCoupons = params => request({ url: '/user/coupon/my', params, showError: false })
 export const getOrderAvailableCoupons = params => request({ url: '/user/coupon/order/available', params, showError: false })
 
-// AI Agent（已对齐用户端 Apifox 契约；部分后端能力仍待联调）
+// AI Agent
 export const aiChat = params => request({ url: '/user/ai/chat', method: 'POST', params, showError: false })
 export const aiChatStream = params => request({ url: '/user/ai/chat/stream', params, showError: false })
 export const aiRecommend = params => request({ url: '/user/ai/recommend', method: 'POST', params, showError: false })
