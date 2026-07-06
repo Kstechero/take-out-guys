@@ -53,6 +53,13 @@ export const aiWriteReview = params => request({ url: '/user/ai/review/write', m
 export const getAiSessions = () => request({ url: '/user/ai/session/list', showError: false })
 export const deleteAiSession = sessionId => request({ url: `/user/ai/session/${sessionId}`, method: 'DELETE' })
 
+// 人工客服
+export const createServiceSession = params => request({ url: '/user/service/session', method: 'POST', params, showError: false })
+export const getCurrentServiceSession = () => request({ url: '/user/service/session/current', showError: false })
+export const sendServiceMessage = params => request({ url: '/user/service/message', method: 'POST', params, showError: false })
+export const getServiceMessageList = params => request({ url: '/user/service/message/list', params, showError: false })
+export const endServiceSession = sessionId => request({ url: '/user/service/session/end', method: 'POST', params: { sessionId }, showError: false })
+
 // 旧页面兼容别名，逐步移除
 export const getList = getCategoryList
 export const getDishList = dishListByCategoryId

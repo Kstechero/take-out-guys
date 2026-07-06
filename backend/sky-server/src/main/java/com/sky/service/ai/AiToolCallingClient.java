@@ -20,7 +20,7 @@ import java.util.Map;
 @Component
 public class AiToolCallingClient {
 
-    private static final int MAX_TOOL_ROUNDS = 5;
+    private static final int MAX_TOOL_ROUNDS = 50;
 
     private final AiProperties properties;
     private final ObjectMapper objectMapper;

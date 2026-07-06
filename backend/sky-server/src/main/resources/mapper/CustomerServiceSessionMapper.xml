@@ -41,10 +41,12 @@
                s.status,
                s.last_message as lastMessage,
                s.last_message_time as lastMessageTime,
+               coalesce(sum(case when m.sender_type = 'user' and m.read_status = 0 then 1 else 0 end), 0) as unreadCount,
                s.create_time as createTime,
                s.update_time as updateTime
         from customer_service_session s
         left join user u on u.id = s.user_id
+        left join customer_service_message m on m.session_id = s.id
         <where>
             <if test="status != null">and s.status = #{status}</if>
             <if test="keyword != null and keyword != ''">
@@ -55,6 +57,7 @@
                 )
             </if>
         </where>
+        group by s.id, s.user_id, u.name, s.source, s.status, s.last_message, s.last_message_time, s.create_time, s.update_time
         order by
             case when s.status = 1 then 0 else 1 end,
             ifnull(s.last_message_time, s.update_time) desc,

@@ -450,3 +450,10 @@ Get-Content -Raw -Encoding UTF8 ADMIN_API_APIFOX.json | ConvertFrom-Json | Out-N
 - Added admin customer-service frontend API wrappers for session paging, message list, reply, and end-session actions.
 - Removed the hard-coded `3` badge on the sidebar human-service menu item and the fixed red dot on the header bell icon.
 - Verified the admin frontend build with `npm.cmd run build` under `admin-web/`.
+
+### 2026-07-06 Human Service Three-Surface Update
+
+- Added a dedicated `user-app/pages/service/index.vue` page and wired the personal-center entry to human customer service.
+- Updated `user-app/pages/ai/chat.vue`, `user-app/pages/api/api.js`, and `user-app/pages.json` so the AI assistant can hand users off to the human-service flow cleanly.
+- Refined `admin-web/src/views/ServiceView.vue` to operate on real session/message data instead of demo content.
+- Added `CustomerServiceSchemaMigrationRunner` plus SQL updates so customer-service tables can self-heal required columns in existing environments.

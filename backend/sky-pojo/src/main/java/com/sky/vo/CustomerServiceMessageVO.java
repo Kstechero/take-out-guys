@@ -15,5 +15,6 @@ public class CustomerServiceMessageVO implements Serializable {
     private String messageType;
     private String content;
     private Integer flagged;
+    private Integer readStatus;
     private LocalDateTime createTime;
 }

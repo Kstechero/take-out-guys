@@ -368,7 +368,9 @@ CREATE TABLE IF NOT EXISTS `customer_service_message` (
   `message_type` varchar(32) NOT NULL DEFAULT 'text',
   `content` text NOT NULL,
   `flagged` int NOT NULL DEFAULT '0',
+  `read_status` int NOT NULL DEFAULT '0' COMMENT '0 unread 1 read',
   `create_time` datetime NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `idx_customer_service_message_session` (`session_id`,`id`)
+  KEY `idx_customer_service_message_session` (`session_id`,`id`),
+  KEY `idx_customer_service_message_read` (`session_id`,`sender_type`,`read_status`,`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Customer service message';

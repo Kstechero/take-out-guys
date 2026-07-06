@@ -14,6 +14,7 @@ public class CustomerServiceSessionVO implements Serializable {
     private Integer status;
     private String lastMessage;
     private LocalDateTime lastMessageTime;
+    private Integer unreadCount;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

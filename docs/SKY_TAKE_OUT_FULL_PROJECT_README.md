@@ -6,7 +6,7 @@
 
 项目蓝图覆盖人工客服、AI 智能助手、AI 智能推荐、AI 帮写评价、优惠券、菜品详情、敏感词过滤、堂食订单和个人中心等模块；其中部分仍处于页面原型或方案设计阶段。整体目标是将传统外卖点餐系统逐步升级为具备智能交互和多场景点餐能力的综合服务平台。
 
-在 AI 能力方面，当前后端通过 OpenAI 兼容协议连接 GX10 vLLM 服务，使用 `ornith` 模型实现管理端与用户端 AI 助手。当前已经落地管理端 SSE 流式对话、模型健康检查、管理端业务 Tool Calling、用户端业务 Tool Calling，以及基于 LangChain4j 文档抽象的共享业务知识检索链路与只读资源目录桥接。会话持久化、Embedding、向量检索增强和推荐闭环仍属于后续规划。
+在 AI 能力方面，当前后端通过 OpenAI 兼容协议连接 GX10 vLLM 服务，使用 `ornith` 模型实现管理端与用户端 AI 助手。当前已经落地管理端 SSE 流式对话、模型健康检查、管理端业务 Tool Calling、用户端业务 Tool Calling、会话持久化、AI 推荐、AI 帮写评价、敏感词审核，以及覆盖用户端、管理端和后端链路的人工客服闭环；同时也已经接入基于 LangChain4j 文档抽象的共享业务知识检索链路与只读资源目录桥接。Embedding、向量检索增强、更实时的客服通信和推荐闭环仍属于后续规划。
 
 > 状态说明：本文“当前实现”以仓库代码和正式 API 文档为准；后文涉及推荐、评价、RAG、人工客服、优惠券和堂食等内容时，若无对应后端接口，均表示产品规划或设计方案，而非已交付功能。
 
@@ -109,7 +109,7 @@ Takeout Guys 的项目定位为：
 
 ## 六、AI 技术栈
 
-当前 AI 能力以管理端运营助手和用户端业务问答为主；当前已经具备共享业务知识检索能力，智能推荐、内容生成、向量化知识检索增强和推荐闭环属于后续规划。
+当前 AI 能力已经覆盖管理端运营助手与完整的用户侧业务闭环；当前已经具备共享业务知识检索、智能推荐、内容生成、敏感词审核和人工客服能力，向量化知识检索增强、更实时的客服通信和推荐闭环属于后续规划。
 
 AI 技术栈如下：
 
@@ -1228,7 +1228,7 @@ AI 组织自然语言回复
 
 ## 十七、项目总结
 
-Takeout Guys 在基础苍穹外卖系统之上进行了前端重构与智能化探索。平台保留了传统外卖业务的核心点餐、下单和运营管理能力，并已接入管理端 AI 运营助手；AI 智能推荐、AI 帮写评价、人工客服、优惠券、堂食订单和 RAG 等能力属于后续产品规划。
+Takeout Guys 在基础苍穹外卖系统之上进行了前端重构与智能化探索。平台保留了传统外卖业务的核心点餐、下单和运营管理能力，并已接入管理端 AI 运营助手、用户端 AI 会话、AI 智能推荐、AI 帮写评价、敏感词审核与人工客服三端闭环；Embedding 增强 RAG、堂食订单、更实时的客服通信和更完整的优惠券闭环仍属于后续产品规划。
 
 当前项目通过 Spring Boot、Vue 3、uni-app，以及基于 OpenAI 兼容协议的 GX10 vLLM/`ornith` 流式调用，形成了外卖业务与 AI 能力结合的可运行基础。后续可在此基础上继续实现用户端 AI、业务工具调用、智能推荐与 RAG 知识库。
 
@@ -1244,7 +1244,7 @@ Based on the original system, this project refactors and optimizes the frontend 
 
 The project adds human customer service, AI assistant, AI dish recommendation, AI review writing, AI comment reply generation, coupon system, dish detail page, sensitive word filtering, dine-in ordering, personal center, and other modules. As a result, the system is upgraded from a traditional food delivery platform into a comprehensive intelligent food delivery service platform with intelligent customer service, intelligent recommendation, content generation, user interaction, and multi-scenario ordering capabilities.
 
-For AI capabilities, the backend currently connects to a GX10 vLLM service through an OpenAI-compatible API and uses the `ornith` model for both the admin assistant and user-side generation features. The implemented scope now includes admin SSE streaming chat, model health checks, admin-side LLM tool calling against real business services, user-side AI chat with persistent sessions, AI dish recommendation based on real sellable dishes, AI review drafting, review submission and moderation, sensitive-word management, and a polling-based human customer service loop. `AdminAiChatServiceImpl` now keeps only the LLM dialogue plus tool-calling path: legacy fixed replies, keyword-triggered branching, and the old upstream direct-streaming path have been removed. Admin tools return structured JSON instead of preformatted natural-language summaries, and `query_orders`, `query_coupons`, and `query_goods` support `all=true` with backend fetch-all pagination so the model can inspect complete datasets instead of only the default first page. Embeddings and vector-search-enhanced RAG remain roadmap items.
+For AI capabilities, the backend currently connects to a GX10 vLLM service through an OpenAI-compatible API and uses the `ornith` model for both the admin assistant and user-side generation features. The implemented scope now includes admin SSE streaming chat, model health checks, admin-side LLM tool calling against real business services, user-side AI chat with persistent sessions, AI dish recommendation based on real sellable dishes, AI review drafting, review submission and moderation, sensitive-word management, and a three-surface human customer service flow spanning the user app, admin console, and backend persistence layer. `AdminAiChatServiceImpl` now keeps only the LLM dialogue plus tool-calling path: legacy fixed replies, keyword-triggered branching, and the old upstream direct-streaming path have been removed. Admin tools return structured JSON instead of preformatted natural-language summaries, and `query_orders`, `query_coupons`, and `query_goods` support `all=true` with backend fetch-all pagination so the model can inspect complete datasets instead of only the default first page. Embeddings, vector-search-enhanced RAG, richer recommendation ranking, and more real-time customer-service transport remain roadmap items.
 
 > Status note: repository code and official API documents define the current implementation. Features described later without matching backend APIs are product plans or design proposals, not completed deliverables.
 
@@ -2466,6 +2466,6 @@ This project can be further extended in the following directions:
 
 ## 17. Project Summary
 
-Takeout Guys combines a frontend refactoring of the basic Sky Take-Out system with a broader AI integration. It preserves core ordering and operational capabilities and now provides an admin AI operations assistant, persistent user AI sessions, AI recommendation, AI-assisted review writing, review persistence, sensitive-word moderation, and a human customer service backend loop. Embedding-based RAG, richer recommendation ranking, dine-in ordering, and more real-time customer-service transport remain roadmap items.
+Takeout Guys combines a frontend refactoring of the basic Sky Take-Out system with a broader AI integration. It preserves core ordering and operational capabilities and now provides an admin AI operations assistant, persistent user AI sessions, AI recommendation, AI-assisted review writing, review persistence, sensitive-word moderation, and a human customer service flow across the user app, admin console, and backend persistence layer. Embedding-based RAG, richer recommendation ranking, dine-in ordering, and more real-time customer-service transport remain roadmap items.
 
 The current project combines Spring Boot, Vue 3, uni-app, and an OpenAI-compatible GX10 vLLM/`ornith` integration to provide a runnable foundation for AI-assisted food delivery operations. Admin-side business tools are already wired into the LLM tool-calling loop, while user-side AI, intelligent recommendation, and RAG can be implemented incrementally on top of this foundation.

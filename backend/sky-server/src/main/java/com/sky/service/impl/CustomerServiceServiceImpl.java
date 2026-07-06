@@ -87,9 +87,12 @@ public class CustomerServiceServiceImpl implements CustomerServiceService {
     }
 
     @Override
+    @Transactional
     public List<CustomerServiceMessageVO> listUserMessages(Long sessionId, Long lastMessageId) {
         CustomerServiceSession session = requireOwnedSession(sessionId);
-        return messageMapper.listBySessionId(session.getId(), lastMessageId);
+        List<CustomerServiceMessageVO> messages = messageMapper.listBySessionId(session.getId(), lastMessageId);
+        messageMapper.markAsReadBySessionAndSenderType(session.getId(), "admin");
+        return messages;
     }
 
     @Override
@@ -104,9 +107,12 @@ public class CustomerServiceServiceImpl implements CustomerServiceService {
     }
 
     @Override
+    @Transactional
     public List<CustomerServiceMessageVO> listAdminMessages(Long sessionId, Long lastMessageId) {
         requireSession(sessionId);
-        return messageMapper.listBySessionId(sessionId, lastMessageId);
+        List<CustomerServiceMessageVO> messages = messageMapper.listBySessionId(sessionId, lastMessageId);
+        messageMapper.markAsReadBySessionAndSenderType(sessionId, "user");
+        return messages;
     }
 
     @Override
@@ -134,6 +140,7 @@ public class CustomerServiceServiceImpl implements CustomerServiceService {
         message.setMessageType(messageType);
         message.setContent(content);
         message.setFlagged(flagged);
+        message.setReadStatus(CustomerServiceMessage.UNREAD);
         message.setCreateTime(now);
         messageMapper.insert(message);
 

@@ -1,5 +1,6 @@
 {
-  "pages": [{
+  "pages": [
+    {
       "path": "pages/index/index",
       "style": {
         "navigationStyle": "custom",
@@ -12,7 +13,6 @@
         "navigationBarTitleText": "提交订单",
         "enablePullDownRefresh": false,
         "navigationBarBackgroundColor": "#333333"
-
       }
     },
     {
@@ -28,7 +28,8 @@
       "style": {
         "navigationBarTitleText": "无网络"
       }
-    }, {
+    },
+    {
       "path": "pages/address/address",
       "style": {
         "navigationStyle": "custom",
@@ -50,11 +51,10 @@
       "path": "pages/addOrEditAddress/addOrEditAddress",
       "style": {
         "navigationStyle": "custom",
-        "navigationBarTitleText": "新增收获地址",
+        "navigationBarTitleText": "新增收货地址",
         "enablePullDownRefresh": false,
         "navigationBarBackgroundColor": "#333333"
       }
-
     },
     {
       "path": "pages/historyOrder/historyOrder",
@@ -62,7 +62,6 @@
         "navigationBarTitleText": "历史订单",
         "enablePullDownRefresh": true,
         "navigationBarBackgroundColor": "#333333"
-
       }
     },
     {
@@ -78,6 +77,14 @@
       "style": {
         "navigationBarTitleText": "AI 智能推荐",
         "navigationBarBackgroundColor": "#ff4b12",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/service/index",
+      "style": {
+        "navigationBarTitleText": "人工客服",
+        "navigationBarBackgroundColor": "#101a2a",
         "navigationBarTextStyle": "white"
       }
     },
@@ -102,15 +109,16 @@
     "navigationBarTextStyle": "white",
     "navigationBarTitleText": "Takeout Guys AI",
     "navigationBarBackgroundColor": "#101a2a",
-    // "navigationBarBackground": "#E95F3C",
     "backgroundColor": "#F8F8F8"
   },
-  "condition": { // 模式配置，仅开发期间生效
-    "current": 0, // 当前激活的模式(list 的索引项)
-    "list": [{
-      "name": "", // 模式名称
-      "path": "", // 启动页面，必选
-      "query": "" // 启动参数，在页面的onLoad函数里面得到
-    }]
+  "condition": {
+    "current": 0,
+    "list": [
+      {
+        "name": "",
+        "path": "",
+        "query": ""
+      }
+    ]
   }
 }

@@ -609,3 +609,12 @@ Get-Content -Raw -Encoding UTF8 AI_AGENT_API_REQUIREMENTS.json | ConvertFrom-Jso
 - 文件：`admin-web/src/api/admin.ts`、`admin-web/src/layout/AppLayout.vue`、`admin-web/src/views/DashboardView.vue`、`admin-web/src/views/ReportsView.vue`、`admin-web/src/views/AgentView.vue`、`admin-web/src/views/ServiceView.vue`、`admin-web/src/styles/main.css`、`docs/PROJECT_DEVELOPMENT_LOG.md`；
 - 验证：`cd admin-web && npm.cmd run build`；
 - 后续：待后端客服 VO 字段完全稳定后，可继续收紧前端字段适配逻辑，并按需要补充未读数或真实通知中心接口。
+
+### 2026-07-06 · Human Customer Service Three-Surface Delivery
+
+- Scope: admin frontend, user mini-program, backend customer-service flow, database migration, and docs.
+- Delivered a full three-surface customer-service loop: the user side now exposes a dedicated human-service page and personal-center entry, the AI chat page can jump into human service, and the admin side handles real session paging, message retrieval, replies, and session closure.
+- Added backend schema-migration protection with `CustomerServiceSchemaMigrationRunner`, updated SQL scripts, and aligned customer-service message/session fields so new and existing environments can boot without manual table fixes.
+- Updated the customer-service service layer and MyBatis mappings to persist richer message metadata, support real polling-based conversation refresh, and keep admin/user views consistent with the stored session state.
+- Removed the obsolete `SpringDataRedisTest` test file while consolidating the customer-service implementation around database-backed flows.
+- Files: `admin-web/src/views/ServiceView.vue`, `user-app/pages/service/index.vue`, `user-app/pages/my/my.vue`, `user-app/pages/ai/chat.vue`, `user-app/pages/api/api.js`, `user-app/pages.json`, `backend/database/ai_review_service.sql`, `backend/database/sky.sql`, `backend/sky-server/src/main/java/com/sky/config/CustomerServiceSchemaMigrationRunner.java`, `backend/sky-server/src/main/java/com/sky/service/impl/CustomerServiceServiceImpl.java`, related POJOs/mappers/XML, and docs.

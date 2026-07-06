@@ -85,7 +85,15 @@ CREATE TABLE IF NOT EXISTS `customer_service_message` (
   `message_type` varchar(32) NOT NULL DEFAULT 'text',
   `content` text NOT NULL,
   `flagged` int NOT NULL DEFAULT '0',
+  `read_status` int NOT NULL DEFAULT '0' COMMENT '0未读 1已读',
   `create_time` datetime NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `idx_customer_service_message_session` (`session_id`,`id`)
+  KEY `idx_customer_service_message_session` (`session_id`,`id`),
+  KEY `idx_customer_service_message_read` (`session_id`,`sender_type`,`read_status`,`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='人工客服消息表';
+
+ALTER TABLE `customer_service_message`
+  ADD COLUMN IF NOT EXISTS `read_status` int NOT NULL DEFAULT '0' COMMENT '0未读 1已读' AFTER `flagged`;
+
+ALTER TABLE `customer_service_message`
+  ADD INDEX IF NOT EXISTS `idx_customer_service_message_read` (`session_id`,`sender_type`,`read_status`,`id`);

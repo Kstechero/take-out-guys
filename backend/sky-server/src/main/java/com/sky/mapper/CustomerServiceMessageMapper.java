@@ -12,4 +12,6 @@ public interface CustomerServiceMessageMapper {
     void insert(CustomerServiceMessage message);
 
     List<CustomerServiceMessageVO> listBySessionId(@Param("sessionId") Long sessionId, @Param("lastMessageId") Long lastMessageId);
+
+    void markAsReadBySessionAndSenderType(@Param("sessionId") Long sessionId, @Param("senderType") String senderType);
 }

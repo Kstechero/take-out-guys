@@ -7,6 +7,9 @@ import java.time.LocalDateTime;
 
 @Data
 public class CustomerServiceMessage implements Serializable {
+    public static final Integer UNREAD = 0;
+    public static final Integer READ = 1;
+
     private Long id;
     private Long sessionId;
     private String senderType;
@@ -14,5 +17,6 @@ public class CustomerServiceMessage implements Serializable {
     private String messageType;
     private String content;
     private Integer flagged;
+    private Integer readStatus;
     private LocalDateTime createTime;
 }
