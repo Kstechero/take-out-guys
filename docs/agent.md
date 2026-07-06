@@ -443,3 +443,10 @@ Get-Content -Raw -Encoding UTF8 ADMIN_API_APIFOX.json | ConvertFrom-Json | Out-N
 - Implemented user review submit/list/like/delete/status APIs, human customer service user/admin APIs, and admin sensitive-word CRUD/check APIs.
 - Added AI session storage truncation guards for `title` and `last_message`, and widened the corresponding SQL column definitions for new environments.
 - Verified the backend build with `mvn compile` under `backend/`.
+
+### 2026-07-06 Frontend Integration Update
+
+- The admin dashboard, reports, AI Agent, and human-service pages now render real backend responses instead of fixed demo numbers.
+- Added admin customer-service frontend API wrappers for session paging, message list, reply, and end-session actions.
+- Removed the hard-coded `3` badge on the sidebar human-service menu item and the fixed red dot on the header bell icon.
+- Verified the admin frontend build with `npm.cmd run build` under `admin-web/`.

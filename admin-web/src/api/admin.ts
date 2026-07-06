@@ -29,6 +29,14 @@ export const getTurnoverReport = (begin: string, end: string) => request.get('/r
 export const getOrderReport = (begin: string, end: string) => request.get('/report/ordersStatistics', { params: { begin, end } })
 export const getUserReport = (begin: string, end: string) => request.get('/report/userStatistics', { params: { begin, end } })
 export const getTop10Report = (begin: string, end: string) => request.get('/report/top10', { params: { begin, end } })
+export const getServiceSessionPage = (params: { page: number; pageSize: number; status?: number; keyword?: string }) =>
+  request.get('/service/session/page', { params })
+export const getServiceMessageList = (params: { sessionId: number; lastMessageId?: number }) =>
+  request.get('/service/message/list', { params })
+export const replyServiceMessage = (data: { sessionId: number; content: string; messageType?: string }) =>
+  request.post('/service/message/reply', data)
+export const endServiceSession = (sessionId: number) =>
+  request.post('/service/session/end', { sessionId })
 
 export interface CouponPayload {
   name: string

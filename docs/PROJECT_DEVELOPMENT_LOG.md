@@ -599,3 +599,13 @@ Get-Content -Raw -Encoding UTF8 AI_AGENT_API_REQUIREMENTS.json | ConvertFrom-Jso
 - Routed AI review drafting, review submission, and customer-service messages through sensitive-word checks.
 - Added session-title and last-message truncation guards to avoid MySQL data truncation when long model outputs are persisted, and widened `ai_chat_session.title` / `last_message` in SQL scripts.
 - Validation: `mvn compile` passed in `backend/`.
+
+### 2026-07-06 · 管理端联调页去除假数据与固定提醒
+
+- 范围：前端、文档；
+- 问题：`admin-web` 中经营总览、数据统计、AI Agent、人工客服页面仍存在固定业务数字、演示会话和提醒气泡，影响后端联调，也容易造成“功能已完整上线”的误解；
+- 改动：经营总览改为只展示工作台、订单和菜品接口返回；数据统计改为直接渲染报表接口返回的序列数据；AI Agent 右侧实时上下文改为复用经营、订单和客服接口；人工客服工作台改为基于真实会话分页、消息列表、回复和结束会话接口渲染；补充管理端客服 API 封装；移除侧边栏人工客服写死的 `3` 提醒气泡和页头铃铛固定红点；
+- 方法：前端统一采用“真实接口 + 加载态 + 空态”模式，保留 AI SSE 对话链路；客服会话与消息展示层增加字段兼容适配，优先消费后端真实字段，避免继续保留演示资料；
+- 文件：`admin-web/src/api/admin.ts`、`admin-web/src/layout/AppLayout.vue`、`admin-web/src/views/DashboardView.vue`、`admin-web/src/views/ReportsView.vue`、`admin-web/src/views/AgentView.vue`、`admin-web/src/views/ServiceView.vue`、`admin-web/src/styles/main.css`、`docs/PROJECT_DEVELOPMENT_LOG.md`；
+- 验证：`cd admin-web && npm.cmd run build`；
+- 后续：待后端客服 VO 字段完全稳定后，可继续收紧前端字段适配逻辑，并按需要补充未读数或真实通知中心接口。
