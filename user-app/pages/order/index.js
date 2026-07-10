@@ -26,6 +26,7 @@ import uniIcons from '../../components/uni-icons/uni-icons.vue'
 		data () {
 			return {
 				platform: 'ios',
+				submittingOrder: false,
 				orderDishPrice: 0,
 				openPayType: false,
 				psersonUrl: '../../static/btn_waiter_sel.png',
@@ -190,14 +191,22 @@ import uniIcons from '../../components/uni-icons/uni-icons.vue'
 				this.openPayType = false
 			},
 			// 支付下单
-			payOrderHandle () {
-        if(!this.address){
-          uni.showToast({
-            title: '请选择收货地址',
-            icon: 'none',
-          })
-          return false
-        }
+			async payOrderHandle () {
+				if (this.submittingOrder) return
+				if (!this.address) {
+					uni.showToast({
+						title: '请选择收货地址',
+						icon: 'none',
+					})
+					return false
+				}
+				if (!this.orderDishNumber) {
+					uni.showToast({
+						title: '购物车为空，暂不能下单',
+						icon: 'none',
+					})
+					return false
+				}
 				const params = {
 					payMethod: 1,
 					addressBookId: this.addressBookId,
@@ -209,20 +218,34 @@ import uniIcons from '../../components/uni-icons/uni-icons.vue'
 					amount: this.originalPayableAmount,
 					couponId: this.selectedCoupon && this.selectedCoupon.id ? this.selectedCoupon.id : undefined
 				}
-				submitOrderSubmit(params).then(async res => {
-					if (res.code === 1) {
+				this.submittingOrder = true
+				uni.showLoading({
+					title: '提交中...',
+					mask: true
+				})
+				try {
+					const submitRes = await submitOrderSubmit(params)
+					if (submitRes.code === 1) {
+						await payOrder({ orderNumber: submitRes.data.orderNumber, payMethod: 1 })
 						uni.removeStorageSync(ORDER_COUPON_STORAGE_KEY)
-						await payOrder({ orderNumber: res.data.orderNumber, payMethod: 1 })
 						uni.redirectTo({
 							url: '/pages/order/success'
 						})
-					}else{
-            uni.showToast({
-              title: res.msg || '操作失败',
-              icon: 'none',
-            })
-          }
-				})
+						return
+					}
+					uni.showToast({
+						title: submitRes.msg || '下单失败',
+						icon: 'none',
+					})
+				} catch (error) {
+					uni.showToast({
+						title: (error && error.msg) || '支付失败，请稍后重试',
+						icon: 'none',
+					})
+				} finally {
+					this.submittingOrder = false
+					uni.hideLoading()
+				}
 			}
 			
 			// async payOrderHandle () {

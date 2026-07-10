@@ -1,459 +1,316 @@
-# Takeout Guys AI 项目开发记录
+﻿# Takeout Guys AI 项目维护文档
 
-> 当前统一仓库结构：`backend/` 为 Spring Boot 后端，`admin-web/` 为管理端，`user-app/` 为小程序，接口与维护文档统一放在 `docs/`。
+> 更新时间：2026-07-10  
+> 依据：当前仓库代码结构、已落地功能、`git log`/`git status` 现状。  
+> 目的：给开发者和后续 AI Agent 一份“与代码和 Git 同步”的项目事实说明。
 
-> 本文档是项目的长期维护说明，面向开发者和 AI Agent。每次完成功能、修改架构、增加依赖或发现重要问题后，应更新对应章节。每日按时间顺序的开发记录请见 `PROJECT_DEVELOPMENT_LOG.md`。
+## 1. 文档使用规则
 
-## 1. 文档维护规则
+- 本文档只记录“仓库中已经存在且基本可用”的能力，不把规划内容写成已完成。
+- 每次新增模块、接口、页面、数据库表、环境变量或部署依赖后，应同步更新 `docs/agent.md`、`docs/PROJECT_DEVELOPMENT_LOG.md`、`docs/SKY_TAKE_OUT_FULL_PROJECT_README.md`。
+- 日志型记录写入 `docs/PROJECT_DEVELOPMENT_LOG.md`；面向交接和维护的事实说明写入本文件；对外完整介绍写入 `docs/SKY_TAKE_OUT_FULL_PROJECT_README.md`。
+- 涉及远端同步时，必须区分：
+  - “代码已在本地实现但未提交/未推送”；
+  - “代码已提交到本地 Git”；
+  - “代码已推送到远端仓库”。
+- 不在文档中记录真实密钥、令牌、数据库密码等敏感信息。
 
-### 1.1 更新原则
+## 2. 当前仓库概况
 
-- 记录已经落地并验证的事实，不把规划写成已完成功能；
-- 未完成内容统一放入“待办与已知限制”；
-- 新增接口后按调用端同步更新 `USER_API_APIFOX.json` 或 `ADMIN_API_APIFOX.json`；
-- 新增依赖、中间件、环境变量、数据表时，必须在本文档登记；
-- 不在文档中记录真实 API Key、数据库密码或其他敏感凭据；
-- 每条变更记录应包含日期、范围、改动、验证方式和后续事项。
-
-### 1.2 变更记录模板
-
-```markdown
-### YYYY-MM-DD · 变更标题
-
-- 范围：前端 / 后端 / 数据库 / AI / 部署
-- 问题：修改前存在的问题
-- 改动：实际完成的内容
-- 方法：关键实现方式或架构决策
-- 文件：新增或修改的主要文件
-- 验证：执行过的测试或构建命令
-- 后续：仍需完成的事项；没有则写“无”
-```
-
-## 2. 项目概况
-
-项目是在基础版苍穹外卖系统上进行的智能化扩展，当前包含：
-
-- Spring Boot 多模块后端；
-- Vue 3 Takeout Guys AI 管理端；
-- uni-app Vue 3 小程序端；
-- 旧工程与原型归档；
-- GX10 vLLM 模型服务配置和 AI Agent 接口契约。
-
-主要目录：
+当前仓库为统一单仓项目，目录职责如下：
 
 ```text
-backend/                          Spring Boot 后端与数据库脚本
-admin-web/                        Vue 3 管理端
-user-app/                         uni-app Vue 3 小程序
-docs/                             API、日志和品牌资源
-scripts/                          工具脚本
-legacy/                           旧工程与原型（不纳入新仓库提交）
+backend/        Spring Boot 后端、数据库脚本、AI/客服/评价等核心服务
+admin-web/      Vue 3 + Vite 管理端
+user-app/       uni-app 微信小程序用户端
+docs/           项目文档、接口导出、维护记录
+scripts/        辅助脚本
+legacy/         历史资源与旧工程归档
 ```
 
-## 3. 当前技术架构
+当前根仓库远端：
 
-### 3.1 后端
+- `origin`: [https://github.com/Kstechero/take-out-guys.git](https://github.com/Kstechero/take-out-guys.git)
 
-- Java；
-- Spring Boot 2.7.3；
-- Spring MVC；
-- MyBatis；
-- MySQL；
-- Redis / Spring Cache；
-- JWT；
-- Knife4j / Swagger；
-- Maven 多模块工程。
+当前分支状态（2026-07-10 检查时）：
 
-后端模块：
+- 当前分支：`main`
+- 已关联远端：`origin/main`
+- 存在未提交修改：
+  - `backend/sky-server/src/main/java/com/sky/service/impl/AddressBookServiceImpl.java`
+  - `user-app/pages/order/index.js`
 
-```text
-sky-common
-sky-pojo
-sky-server
-```
+这意味着：文档中凡是涉及这两个文件的“最新变化”，只能描述为“工作区已有未提交改动”，不能写成“已提交并推送”。
 
-三个模块的父工程位于 `backend/pom.xml`。
+## 3. 当前已落地功能范围
 
-### 3.2 新管理端
+以下内容均以当前代码目录、控制器、页面和最近提交记录为准。
 
-- Vue 3；
-- TypeScript；
-- Vite；
-- Vue Router；
-- Pinia；
-- Axios；
-- Element Plus；
-- Element Plus Icons。
+### 3.1 后端基础业务能力
 
-### 3.3 AI 服务
+后端当前已具备的传统外卖业务能力包括：
 
-- 推理服务：GX10 上运行的 vLLM；
-- 协议：OpenAI Compatible API；
-- 模型：`ornith`；
-- 模型发现：`GET /v1/models`；
-- 对话补全：`POST /v1/chat/completions`；
-- 最大上下文：262144；
-- 认证方式：`Authorization: Bearer <api-key>`。
-
-当前后端同时使用原生 Java HTTP 调用和 LangChain4j 文档抽象。`/admin/ai/**` 与 `/user/ai/**` 当前都只保留 LLM 对话与 tool calling 主链路，旧的固定回答、关键词触发和直连流式分支已移除。两端工具统一返回结构化 JSON，管理端列表工具支持 `all=true` 以便后端自动分页拉取全量结果。当前已补齐共享业务知识检索链路，并保留只读的资源目录桥接；AI 服务端代码按 `ServiceImpl 编排层 + ToolRegistry + ToolExecutor + SessionManager` 的结构拆分。会话持久化、Embedding 与向量检索增强仍待实现。
-
-## 4. 重要架构决策
-
-### 4.1 使用独立 Vue 3 管理端
-
-原管理端是 Vue 2 + Vue CLI 工程。为承载新的 AI Agent 和品牌设计，新建并演进为当前的 `admin-web` Vue 3 管理端，不直接覆盖旧管理端，便于回退和对照功能。
-
-### 4.2 开发环境不依赖 Nginx
-
-Vite 开发服务器负责接口代理：
-
-```text
-浏览器 /api/**
-    → Vite :5173
-    → http://localhost:8080/admin/**
-```
-
-配置文件：`admin-web/vite.config.ts`。
-
-这样本地联调不需要 Nginx，也不需要额外配置后端 CORS。生产环境仍可选择 Nginx、容器网关或其他反向代理。
-
-### 4.3 沿用现有认证协议
-
-- 管理端登录：`POST /admin/employee/login`；
-- 管理端 Token 请求头：`token`；
-- 用户端 Token 请求头：`authentication`；
-- 统一响应：`{ code, msg, data }`。
-
-### 4.4 GX10 密钥通过环境变量注入
-
-后端配置位于：
-
-```text
-backend/sky-server/src/main/resources/application.yml
-```
-
-支持的环境变量：
-
-```text
-GX10_AI_BASE_URL
-GX10_AI_API_KEY
-GX10_AI_MODEL
-GX10_AI_CONNECT_TIMEOUT
-GX10_AI_READ_TIMEOUT
-GX10_AI_MAX_TOKENS
-GX10_AI_TEMPERATURE
-GX10_AI_RAG_ENABLED
-GX10_AI_RAG_TOP_K
-GX10_AI_MCP_ENABLED
-```
-
-密钥禁止写入前端、接口响应或版本库。`gx10.txt` 当前含明文凭据，应该迁移为本机环境变量并从版本管理中排除。
-
-### 4.5 AI 工具必须复用业务 Service
-
-AI Agent 不直接操作 Mapper 或数据库。订单查询、订单取消、菜品查询、经营统计等能力应通过已有 Service 实现，同时执行用户身份、订单归属和状态校验。
-
-## 5. 当前功能状态
-
-### 5.1 已接通的管理端能力
-
-- 管理员登录和退出；
-- JWT Token 自动携带；
-- 工作台经营数据；
-- 订单概览；
-- 菜品概览；
-- 订单分页查询；
-- 菜品分页查询；
-- 员工分页查询；
-- 分类分页查询；
-- 套餐分页查询；
-- 订单接单、拒单、取消、派送和完成；
-- 菜品、套餐、分类、员工修改和状态切换；
-- 菜品、套餐和分类删除；
-- 分类新增；
-- 菜品新增和修改，支持分类、价格、图片、描述及多组口味；
-- 员工新增和修改，支持账号、姓名、手机号、性别及身份证号；
-- 订单详情查看，所有订单状态均保留详情入口；
-- 营业额、订单、用户和销量统计入口；
-- 店铺营业状态读取和切换。
-
-### 5.2 新管理端页面
-
-- 登录页；
-- 经营总览；
-- 数据统计；
-- AI Agent 工作台；
-- 企业知识检索与 MCP 能力目录；
-- 订单管理；
-- 菜品管理；
+- 员工登录、分页、状态启停、信息维护；
 - 分类管理；
+- 菜品管理；
 - 套餐管理；
-- 员工管理；
-- 优惠券入口；
-- 评价管理入口；
-- 敏感词管理入口；
-- 人工客服工作台入口。
+- 店铺营业状态管理；
+- 用户微信登录；
+- 用户端菜品/套餐浏览；
+- 购物车增删改查；
+- 地址簿 CRUD；
+- 下单、订单详情、订单状态流转；
+- 历史订单与订单相关统计；
+- 运营报表与工作台概览；
+- Redis 缓存（店铺状态、菜品/套餐等）。
 
-### 5.3 已接通的用户端 AI 能力
+从 Git 历史看，这部分能力对应的关键提交包括：
 
-- `POST /user/ai/chat` 非流式对话；
-- `GET /user/ai/chat/stream` SSE 流式对话；
-- `GET /user/ai/session/list` 会话列表；
-- `DELETE /user/ai/session/{sessionId}` 删除会话；
-- 店铺营业状态查询；
-- 地址列表、地址详情、默认地址查询；
-- 地址新增、修改、删除和设为默认；
-- 我的优惠券、可领取优惠券、订单可用优惠券查询；
-- 领券；
-- 购物车查询、加购、减购和清空；
-- 历史订单查询、订单详情查询；
-- 取消订单、再来一单和催单；
-- 菜品与套餐搜索。
+- `80e7873` 分类管理
+- `917b6fd` / `36206d1` / `97f07cc` 菜品管理
+- `297b095` 套餐管理
+- `f92e74c` 店铺状态 Redis 支持
+- `2c67aeb` 微信登录与用户端商品浏览
+- `45ec21c` 购物车 CRUD
+- `63fdbb2` 地址簿 CRUD
+- `fd8dc59` / `12ceb85` / `d4137ff` 下单、订单处理、报表、定时任务等
 
-### 5.4 仅有前端入口、后端尚未完成
+### 3.2 管理端当前页面能力
 
-- 优惠券；
-- 菜品评价；
-- 敏感词；
-- 人工客服；
-- AI 推荐；
-- AI 评价帮写；
-- RAG 知识库。
+`admin-web/src/views` 当前实际存在的页面：
 
-这些页面不得使用模拟数据表示已完成，应展示明确的待实现状态。
+- `LoginView.vue`：登录页
+- `DashboardView.vue`：经营总览
+- `ReportsView.vue`：统计报表
+- `AgentView.vue`：AI Agent 工作台
+- `BusinessView.vue`：订单、菜品、分类、套餐、敏感词、员工等复用业务页
+- `CouponView.vue`：优惠券管理
+- `ReviewsView.vue`：评价管理
+- `ServiceView.vue`：人工客服工作台
 
-## 6. 已接入的后端接口
+`admin-web/src/router/index.ts` 中当前已注册的管理端菜单/路由：
 
-```text
-POST /user/ai/chat
-GET  /user/ai/chat/stream
-GET  /user/ai/session/list
-DELETE /user/ai/session/{sessionId}
+- `/dashboard` 经营总览
+- `/reports` 数据统计
+- `/agent` AI Agent
+- `/orders` 订单管理
+- `/dishes` 菜品管理
+- `/categories` 分类管理
+- `/setmeals` 套餐管理
+- `/coupons` 优惠券管理
+- `/reviews` 评价管理
+- `/service` 人工客服
+- `/sensitive` 敏感词库
+- `/employees` 员工管理
 
-POST /admin/employee/login
-POST /admin/employee/logout
-GET  /admin/employee/page
+说明：文档以后应以路由和页面文件为准，不再沿用旧版“管理端只有基础 CRUD”描述。
 
-GET  /admin/workspace/businessData
-GET  /admin/workspace/overviewOrders
-GET  /admin/workspace/overviewDishes
-GET  /admin/workspace/overviewSetmeals
+### 3.3 用户端当前页面能力
 
-GET  /admin/order/conditionSearch
-GET  /admin/order/statistics
-PUT  /admin/order/confirm
-PUT  /admin/order/rejection
-PUT  /admin/order/cancel
-PUT  /admin/order/delivery/{id}
-PUT  /admin/order/complete/{id}
+`user-app/pages.json` 与 `user-app/pages/` 当前显示用户端已落地页面包括：
 
-GET  /admin/dish/page
-GET  /admin/category/page
-GET  /admin/setmeal/page
+- 首页 `pages/index/index`
+- 提交订单 `pages/order/index`
+- 下单成功 `pages/order/success`
+- 地址管理 `pages/address/address`
+- 新增/编辑地址 `pages/addOrEditAddress/addOrEditAddress`
+- 历史订单 `pages/historyOrder/historyOrder`
+- 个人中心 `pages/my/my`
+- AI 聊天助手 `pages/ai/chat`
+- AI 智能推荐 `pages/ai/recommend`
+- 人工客服 `pages/service/index`
+- 用户评价提交 `pages/review/index`
+- 菜品评价列表 `pages/dish-reviews/index`
+- 优惠券中心 `pages/coupon/index`
 
-GET  /admin/report/turnoverStatistics
-GET  /admin/report/ordersStatistics
-GET  /admin/report/userStatistics
-GET  /admin/report/top10
+说明：用户端已经不再只是“点餐 + 地址 + 历史订单”，还包含 AI、评价、客服、优惠券、个人中心等扩展能力。
 
-GET  /admin/shop/status
-PUT  /admin/shop/{status}
-```
+### 3.4 当前 AI 能力
 
-AI 接口与普通业务接口使用同一套契约：用户侧归入 `USER_API_APIFOX.json`，管理侧归入 `ADMIN_API_APIFOX.json`；未实现的规划接口不进入正式 Apifox 文档。
+当前代码显示，AI 能力已经进入“业务集成阶段”，不是单独 Demo：
 
-## 7. 品牌与视觉规范
+后端控制器已存在：
 
-品牌名称：Takeout Guys AI。
+- `backend/sky-server/src/main/java/com/sky/controller/admin/AdminAiController.java`
+- `backend/sky-server/src/main/java/com/sky/controller/user/UserAiController.java`
 
-品牌资源：
+结合近期提交，当前已落地能力包括：
 
-```text
-icons/icon (1).png    完整品牌字标
-icons/icon (2).png    外卖袋机器人图标
-```
+- 管理端 AI 对话与健康检查；
+- 用户端 AI 聊天；
+- 用户端 AI 推荐；
+- 管理端与用户端 Tool Calling 接入；
+- 后端 AI 调用循环与工具执行注册；
+- 管理端本地知识检索/知识问答方向的基础设施；
+- SSE 流式响应。
 
-视觉关键词：
+与 AI 相关的关键提交：
 
-- 橙红色；
-- 深海军蓝；
-- 暖白背景；
-- 圆角卡片；
-- 外卖速度线；
-- AI 电路节点。
+- `c50b930` add GX10 AI streaming API
+- `fae8fa3` Add AI service backend loop
+- `af82a46` refactor admin/user ai tool calling, update frontend, and sync docs
+- `6553c72` Replace admin mock data with live API states
 
-新管理端通过 Vite `publicDir: '../icons'` 复用根目录资源。新增页面应继续使用当前 CSS 变量和视觉语言，避免混入旧后台的黄色主题。
+### 3.5 当前评价、敏感词、人工客服能力
 
-## 8. 新增和修改的主要文件
+这是当前项目近几次迭代中最重要的新增能力之一。
 
-### 8.1 根目录
+#### 评价系统
 
-- `USER_API_APIFOX.json`：用户端及支付回调接口；
-- `ADMIN_API_APIFOX.json`：管理端接口（包括已实现的 AI 接口）；
-- `PROJECT_DEVELOPMENT_LOG.md`：每日开发日志；
-- `admin-web/`：新 Vue 3 管理端。
+当前已存在：
 
-### 8.2 新管理端
+- 用户端评价提交：`UserReviewController.java`
+- 管理端评价管理：`AdminReviewController.java`
+- 用户端菜品评价列表页：`user-app/pages/dish-reviews/index.vue`
+- 管理端评价管理页：`admin-web/src/views/ReviewsView.vue`
+- 点赞/分页/管理端筛选相关 Mapper 与 VO/DTO
 
-```text
-admin-web/
-├── package.json
-├── package-lock.json
-├── vite.config.ts
-├── tsconfig.json
-├── tsconfig.app.json
-├── tsconfig.node.json
-├── .env.development
-├── .env.production
-├── README.md
-└── src/
-    ├── api/admin.ts
-    ├── layout/AppLayout.vue
-    ├── router/index.ts
-    ├── stores/auth.ts
-    ├── styles/main.css
-    ├── utils/request.ts
-    └── views/
-        ├── LoginView.vue
-        ├── DashboardView.vue
-        ├── ReportsView.vue
-        ├── AgentView.vue
-        ├── BusinessView.vue
-        └── ServiceView.vue
-```
+对应关键提交：
 
-### 8.3 后端配置
+- `a7ca576 add review moderation and sensitive tools`
 
-- `backend/sky-server/src/main/resources/application.yml`
-  - 新增 `sky.ai` 配置；
-  - 支持 GX10 URL、Key、模型、超时、温度和最大输出 Token；
-  - 新增 `sky.ai.rag.*` 企业知识检索配置；
-  - 新增 `sky.ai.mcp.*` MCP 风格能力目录配置。
+#### 敏感词能力
 
-## 9. 依赖与中间件登记
+当前已存在：
 
-### 9.1 新管理端依赖
+- 管理端敏感词接口：`AdminSensitiveWordController.java`
+- 敏感词 DTO / Mapper / Service 实现
+- 与 AI/客服/评价场景联动的内容检测能力
 
-| 依赖 | 用途 |
-|---|---|
-| Vue 3 | 前端框架 |
-| Vite | 开发服务器与构建 |
-| TypeScript / vue-tsc | 类型检查 |
-| Vue Router | 页面路由 |
-| Pinia | 登录和全局状态 |
-| Axios | HTTP 请求与 Token 拦截 |
-| Element Plus | 管理端 UI |
-| Element Plus Icons | 页面图标 |
+说明：敏感词库已经是现有代码的一部分，不应再写成“预留规划”。
 
-### 9.2 基础设施与中间件
+#### 人工客服
 
-| 名称 | 状态 | 用途 |
-|---|---|---|
-| MySQL | 已使用 | 业务数据持久化 |
-| Redis | 已使用 | 缓存；未来用于会话或向量检索 |
-| Vite Proxy | 已使用 | 本地替代 Nginx 转发管理端请求 |
-| Nginx | 开发环境不需要 | 可用于生产静态部署和反向代理 |
-| GX10 vLLM | 已接入 | 大模型推理 |
-| LangChain4j | 已加入 | 企业知识文档抽象与轻量 RAG |
-| Spring AI | 未加入 | 可选 AI 客户端框架 |
-| MCP Bridge | 已加入 | 管理端只读能力目录与资源读取桥接 |
+当前已存在：
 
-## 10. 验证基线
+- 用户端人工客服会话创建、查询、发消息、结束会话；
+- 管理端客服会话分页、消息列表、回复、结束；
+- 会话与消息表、Schema 迁移初始化；
+- 用户端 `pages/service/index.vue` 与管理端 `ServiceView.vue` 联动。
 
-完成变更后至少执行：
+对应关键提交：
 
-### 10.1 后端
+- `9013394 feat: deliver end-to-end human customer service across app, admin, and backend`
 
-```powershell
-cd backend
-mvn compile -DskipTests
-```
+### 3.6 优惠券能力
 
-### 10.2 新管理端
+当前代码中已存在：
 
-```powershell
-cd admin-web
-npm.cmd exec vue-tsc -- --noEmit -p tsconfig.app.json
-```
+- 管理端优惠券控制器：`backend/sky-server/src/main/java/com/sky/controller/admin/CouponController.java`
+- 用户端优惠券控制器：`backend/sky-server/src/main/java/com/sky/controller/user/CouponController.java`
+- 用户端优惠券页面：`user-app/pages/coupon/index.vue`
+- 管理端优惠券页面：`admin-web/src/views/CouponView.vue`
+- `UserCouponMapper` 等配套数据访问代码
 
-开发运行：
+说明：优惠券功能至少已完成基础的前后端与接口串联，后续若有更细节的规则扩展，再增量补充文档。
 
-```powershell
-npm.cmd run dev
-```
+## 4. 当前后端接口范围
 
-访问：`http://localhost:5173`。
+从控制器文件来看，当前后端接口分为以下几类。
 
-### 10.3 AI 契约
+### 4.1 管理端控制器
 
-```powershell
-Get-Content -Raw -Encoding UTF8 USER_API_APIFOX.json | ConvertFrom-Json | Out-Null
-Get-Content -Raw -Encoding UTF8 ADMIN_API_APIFOX.json | ConvertFrom-Json | Out-Null
-```
+- `AdminAiController`
+- `AdminCustomerServiceController`
+- `AdminReviewController`
+- `AdminSensitiveWordController`
+- `CategoryController`
+- `CommonController`
+- `CouponController`
+- `DishController`
+- `EmployeeController`
+- `OrderController`
+- `ReportController`
+- `SetmealController`
+- `ShopController`
+- `WorkspaceController`
 
-### 10.4 已验证事实
+### 4.2 用户端控制器
 
-- Spring Boot 可在 8080 端口启动；
-- Vue 3 开发服务器可在 5173 端口启动；
-- `admin` 登录可签发 JWT；
-- 工作台、订单、菜品、员工、分类和套餐接口可携带 Token 调用；
-- GX10 `/v1/models` 可访问并返回 `ornith`；
-- Maven 多模块编译通过；
-- 新管理端 TypeScript 检查通过；
-- AI Agent JSON 契约解析通过。
+- `AddressBookController`
+- `CategoryController`
+- `CouponController`
+- `DishController`
+- `OrderController`
+- `SetmealController`
+- `ShopController`
+- `ShoppingCartController`
+- `UserAiController`
+- `UserController`
+- `UserCustomerServiceController`
+- `UserReviewController`
 
-## 11. 待办与已知限制
+### 4.3 通知与其他
 
-### P0
+- `PayNotifyController`
 
-1. AI 会话和消息持久化；
-2. AI 会话持久化；
-3. AI 推荐结果回查与正式业务闭环；
-4. 同步更新 `USER_API_APIFOX.json` 与 `ADMIN_API_APIFOX.json` 中新增 AI tool calling 契约；
-5. 完善套餐新增表单和套餐菜品组合表单；
-6. 向量检索、Embedding 与用户侧正式知识库。
+因此，`docs/USER_API_APIFOX.json` 与 `docs/ADMIN_API_APIFOX.json` 理论上应覆盖以上接口族；若有缺漏，应后续按控制器补齐导出。
 
-### P1
+## 5. Git 状态与上传情况说明
 
-1. AI 会话和消息表；
-2. AI 菜品推荐；
-3. AI 评价帮写；
-4. 用户侧客服规则知识库；
-5. 菜品评价模块；
-6. 优惠券模块；
-7. 敏感词模块；
-8. 人工客服模块；
-9. 完整前端错误处理和权限反馈。
+截至 2026-07-10，本仓库 Git 现状可归纳为：
 
-### 已知限制
+### 5.1 已提交并已在远端可见的主要阶段
 
-- 管理端 AI 已实现后端接口，并新增只读企业知识检索与 MCP 风格能力目录；当前尚未提供独立的外部 MCP Server，也未开放写操作型 MCP 工具；
-- 用户端与管理端 AI 会话当前仅保存在服务进程内存中，多实例部署下不会共享；
-- GX10 推理模型可能返回 `reasoning_content`，最终用户响应只应展示 `content`；
-- 推理模型使用过小的 `max_tokens` 可能在正文生成前以 `length` 结束；
-- `gx10.txt` 含明文凭据，存在安全风险；
-- 当前 RAG 为本地文档分段与关键词排序实现，尚未接入 embedding、向量库、重排器和权限分层知识源；
-- 菜品新增表单已经支持图片上传、分类和口味；套餐新增仍需实现套餐菜品组合表单；
-- 优惠券、评价、敏感词和客服页面目前没有对应后端 Controller。
-### 2026-07-06 Update
+远端 `origin/main` 已包含以下关键演进：
 
-- Added `backend/database/ai_review_service.sql` for `ai_chat_session`, `ai_chat_message`, `dish_review`, `dish_review_like`, `sensitive_word`, `customer_service_session`, and `customer_service_message`.
-- Moved both user-side and admin-side AI sessions from in-memory storage to database persistence.
-- Implemented `/user/ai/recommend` and `/user/ai/review/write`, and routed AI-generated review text through sensitive-word moderation.
-- Implemented user review submit/list/like/delete/status APIs, human customer service user/admin APIs, and admin sensitive-word CRUD/check APIs.
-- Added AI session storage truncation guards for `title` and `last_message`, and widened the corresponding SQL column definitions for new environments.
-- Verified the backend build with `mvn compile` under `backend/`.
+1. 后端基础外卖系统能力；
+2. Vue 3 管理端重构；
+3. uni-app 用户端并入统一仓库；
+4. AI 流式接口与 AI 服务循环；
+5. 管理端从 mock 数据切换到真实接口；
+6. 人工客服全链路；
+7. 评价管理与敏感词工具。
 
-### 2026-07-06 Frontend Integration Update
+最近关键提交顺序：
 
-- The admin dashboard, reports, AI Agent, and human-service pages now render real backend responses instead of fixed demo numbers.
-- Added admin customer-service frontend API wrappers for session paging, message list, reply, and end-session actions.
-- Removed the hard-coded `3` badge on the sidebar human-service menu item and the fixed red dot on the header bell icon.
-- Verified the admin frontend build with `npm.cmd run build` under `admin-web/`.
+- `6553c72` 管理端改为真实 API
+- `fae8fa3` AI 服务后端闭环
+- `9013394` 人工客服全链路
+- `a7ca576` 评价审核与敏感词工具
 
-### 2026-07-06 Human Service Three-Surface Update
+### 5.2 当前未提交工作区改动
 
-- Added a dedicated `user-app/pages/service/index.vue` page and wired the personal-center entry to human customer service.
-- Updated `user-app/pages/ai/chat.vue`, `user-app/pages/api/api.js`, and `user-app/pages.json` so the AI assistant can hand users off to the human-service flow cleanly.
-- Refined `admin-web/src/views/ServiceView.vue` to operate on real session/message data instead of demo content.
-- Added `CustomerServiceSchemaMigrationRunner` plus SQL updates so customer-service tables can self-heal required columns in existing environments.
+当前 `git status` 显示仍有 2 个文件未提交：
+
+- `backend/sky-server/src/main/java/com/sky/service/impl/AddressBookServiceImpl.java`
+- `user-app/pages/order/index.js`
+
+结论：
+
+- 文档应承认“仓库当前存在未提交本地变更”；
+- 这两处变更如果影响功能描述，需要等提交后再把它们写入开发日志中的“已提交记录”；
+- 若只是小修复，可以在开发日志中写成“2026-07-10 工作区存在待提交修正”。
+
+## 6. 当前明确未完成或不应夸大描述的部分
+
+根据代码与提交现状，以下内容不建议写成“已经完整闭环上线”：
+
+- 向量化知识库、Embedding、RAG 增强检索的完整生产化闭环；
+- AI 会话持久化、长期记忆、多租户知识库管理的完整产品能力；
+- 推荐系统的强个性化训练或实时反馈闭环；
+- 全量自动化测试、完整 CI/CD、正式生产部署方案；
+- 小程序所有页面都经过正式联调验收。
+
+更准确的表述应是：
+
+- 相关能力已有基础实现或局部接入；
+- 生产级完善度仍取决于后续联调、数据、部署与验收。
+
+## 7. 文档维护建议
+
+后续每次更新文档时，建议固定执行以下检查：
+
+1. 先看 `git status --short --branch`，区分未提交与已推送；
+2. 再看 `git log --oneline -n 20`，提炼最近阶段成果；
+3. 核对 `admin-web/src/router/index.ts`、`user-app/pages.json`、后端 `controller/`，确认实际功能面；
+4. 最后同步更新三份文档，确保“功能说明、开发日志、完整 README”三者口径一致。
+
+## 8. 本次整理结论
+
+本次文档整理后的统一口径应为：
+
+- 项目已经从“基础外卖系统”演进为“外卖业务 + AI 助手 + 人工客服 + 评价治理 + 敏感词能力”的统一单仓项目；
+- 管理端、用户端、后端三侧均已存在对应代码与页面，不再是概念设计；
+- Git 远端已经包含人工客服、评价、敏感词等主要增量；
+- 当前工作区仍有 2 个文件待提交，因此文档中不把这部分描述为“已上传完成”。

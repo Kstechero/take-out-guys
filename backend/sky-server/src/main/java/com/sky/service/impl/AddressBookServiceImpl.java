@@ -31,9 +31,28 @@ public class AddressBookServiceImpl implements AddressBookService {
      *
      * @param addressBook
      */
+    @Transactional
     public void save(AddressBook addressBook) {
-        addressBook.setUserId(BaseContext.getCurrentId());
-        addressBook.setIsDefault(0);
+        Long userId = BaseContext.getCurrentId();
+        addressBook.setUserId(userId);
+
+        AddressBook query = new AddressBook();
+        query.setUserId(userId);
+        List<AddressBook> existingList = addressBookMapper.list(query);
+        boolean hasDefaultAddress = existingList.stream()
+                .anyMatch(item -> Integer.valueOf(1).equals(item.getIsDefault()));
+
+        // First-time users, or users whose default address was lost, should not
+        // be forced to manually re-select the address before ordering.
+        if (!hasDefaultAddress || Integer.valueOf(1).equals(addressBook.getIsDefault())) {
+            AddressBook reset = new AddressBook();
+            reset.setUserId(userId);
+            reset.setIsDefault(0);
+            addressBookMapper.updateIsDefaultByUserId(reset);
+            addressBook.setIsDefault(1);
+        } else {
+            addressBook.setIsDefault(0);
+        }
         addressBookMapper.insert(addressBook);
     }
 
