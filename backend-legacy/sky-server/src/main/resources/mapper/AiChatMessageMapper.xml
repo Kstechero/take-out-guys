@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sky.mapper.AiChatMessageMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into ai_chat_message(session_id, role, content, create_time)
+        values(#{sessionId}, #{role}, #{content}, #{createTime})
+    </insert>
+
+    <select id="listRecentBySessionId" resultType="com.sky.entity.AiChatMessage">
+        select * from (
+            select * from ai_chat_message
+            where session_id = #{sessionId}
+            order by id desc
+            limit #{limit}
+        ) t
+        order by t.id asc
+    </select>
+
+    <delete id="deleteById">
+        delete from ai_chat_message where id = #{id}
+    </delete>
+
+    <delete id="deleteBySessionId">
+        delete from ai_chat_message where session_id = #{sessionId}
+    </delete>
+</mapper>

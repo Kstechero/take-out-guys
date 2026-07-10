@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sky.mapper.CustomerServiceSessionMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into customer_service_session(user_id, source, status, last_message, last_message_time, create_time, update_time, closed_time)
+        values(#{userId}, #{source}, #{status}, #{lastMessage}, #{lastMessageTime}, #{createTime}, #{updateTime}, #{closedTime})
+    </insert>
+
+    <select id="getOpenByUserId" resultType="com.sky.entity.CustomerServiceSession">
+        select * from customer_service_session
+        where user_id = #{userId} and status = 1
+        order by id desc
+        limit 1
+    </select>
+
+    <select id="getById" resultType="com.sky.entity.CustomerServiceSession">
+        select * from customer_service_session where id = #{id}
+    </select>
+
+    <update id="updateMeta">
+        update customer_service_session
+        set last_message = #{lastMessage},
+            last_message_time = #{lastMessageTime},
+            update_time = #{updateTime}
+        where id = #{id}
+    </update>
+
+    <update id="closeById">
+        update customer_service_session
+        set status = 2,
+            closed_time = #{closedTime},
+            update_time = #{closedTime}
+        where id = #{id}
+    </update>
+
+    <select id="pageQuery" resultType="com.sky.vo.CustomerServiceSessionVO">
+        select s.id,
+               s.user_id as userId,
+               u.name as userName,
+               s.source,
+               s.status,
+               s.last_message as lastMessage,
+               s.last_message_time as lastMessageTime,
+               coalesce(sum(case when m.sender_type = 'user' and m.read_status = 0 then 1 else 0 end), 0) as unreadCount,
+               s.create_time as createTime,
+               s.update_time as updateTime
+        from customer_service_session s
+        left join user u on u.id = s.user_id
+        left join customer_service_message m on m.session_id = s.id
+        <where>
+            <if test="status != null">and s.status = #{status}</if>
+            <if test="keyword != null and keyword != ''">
+                and (
+                    u.name like concat('%', #{keyword}, '%')
+                    or s.last_message like concat('%', #{keyword}, '%')
+                    or cast(s.user_id as char) like concat('%', #{keyword}, '%')
+                )
+            </if>
+        </where>
+        group by s.id, s.user_id, u.name, s.source, s.status, s.last_message, s.last_message_time, s.create_time, s.update_time
+        order by
+            case when s.status = 1 then 0 else 1 end,
+            ifnull(s.last_message_time, s.update_time) desc,
+            s.id desc
+    </select>
+</mapper>

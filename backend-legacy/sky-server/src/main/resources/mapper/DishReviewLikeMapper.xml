@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sky.mapper.DishReviewLikeMapper">
+    <select id="getByReviewIdAndUserId" resultType="com.sky.entity.DishReviewLike">
+        select * from dish_review_like where review_id = #{reviewId} and user_id = #{userId}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into dish_review_like(review_id, user_id, create_time)
+        values(#{reviewId}, #{userId}, #{createTime})
+    </insert>
+
+    <delete id="deleteById">
+        delete from dish_review_like where id = #{id}
+    </delete>
+
+    <delete id="deleteByReviewId">
+        delete from dish_review_like where review_id = #{reviewId}
+    </delete>
+</mapper>

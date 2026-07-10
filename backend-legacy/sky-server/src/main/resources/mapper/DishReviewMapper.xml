@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sky.mapper.DishReviewMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into dish_review(user_id, order_id, dish_id, rating, content, images, like_count, status, ai_generated, create_time, update_time)
+        values(#{userId}, #{orderId}, #{dishId}, #{rating}, #{content}, #{images}, #{likeCount}, #{status}, #{aiGenerated}, #{createTime}, #{updateTime})
+    </insert>
+
+    <select id="pageForAdmin" resultType="com.sky.vo.AdminReviewPageVO">
+        select r.id,
+               r.user_id as userId,
+               u.name as userName,
+               r.order_id as orderId,
+               o.number as orderNumber,
+               r.dish_id as dishId,
+               d.name as dishName,
+               d.image as dishImage,
+               r.rating,
+               r.content,
+               r.images as imagesJson,
+               r.like_count as likeCount,
+               r.status,
+               r.ai_generated as aiGenerated,
+               r.create_time as createTime,
+               r.update_time as updateTime
+        from dish_review r
+        left join user u on u.id = r.user_id
+        left join orders o on o.id = r.order_id
+        left join dish d on d.id = r.dish_id
+        <where>
+            <if test="queryDTO != null and queryDTO.status != null">
+                r.status = #{queryDTO.status}
+            </if>
+            <if test="queryDTO != null and queryDTO.keyword != null and queryDTO.keyword != ''">
+                and (
+                    r.content like concat('%', #{queryDTO.keyword}, '%')
+                    or u.name like concat('%', #{queryDTO.keyword}, '%')
+                    or d.name like concat('%', #{queryDTO.keyword}, '%')
+                    or o.number like concat('%', #{queryDTO.keyword}, '%')
+                )
+            </if>
+        </where>
+        order by r.create_time desc, r.id desc
+    </select>
+
+    <select id="pageByUserId" resultType="com.sky.vo.UserReviewPageVO">
+        select r.id,
+               r.order_id as orderId,
+               o.number as orderNumber,
+               r.dish_id as dishId,
+               d.name as dishName,
+               d.image as dishImage,
+               r.rating,
+               r.content,
+               r.images as imagesJson,
+               r.like_count as likeCount,
+               r.status,
+               r.ai_generated as aiGenerated,
+               r.create_time as createTime,
+               r.update_time as updateTime
+        from dish_review r
+        left join orders o on o.id = r.order_id
+        left join dish d on d.id = r.dish_id
+        where r.user_id = #{userId}
+        <if test="queryDTO != null and queryDTO.orderId != null">
+            and r.order_id = #{queryDTO.orderId}
+        </if>
+        <if test="queryDTO != null and queryDTO.dishId != null">
+            and r.dish_id = #{queryDTO.dishId}
+        </if>
+        order by r.create_time desc, r.id desc
+    </select>
+
+    <select id="pageByDishId" resultType="com.sky.vo.DishReviewVO">
+        select r.id,
+               r.order_id as orderId,
+               r.dish_id as dishId,
+               r.user_id as userId,
+               u.name as userName,
+               r.rating,
+               r.content,
+               r.images as imagesJson,
+               r.like_count as likeCount,
+               case when l.id is null then false else true end as liked,
+               r.create_time as createTime
+        from dish_review r
+        left join user u on u.id = r.user_id
+        left join dish_review_like l on l.review_id = r.id and l.user_id = #{currentUserId}
+        where r.dish_id = #{dishId} and r.status = 1
+        order by r.create_time desc, r.id desc
+    </select>
+
+    <select id="getById" resultType="com.sky.entity.DishReview">
+        select * from dish_review where id = #{id}
+    </select>
+
+    <select id="getByOrderAndDishAndUser" resultType="com.sky.entity.DishReview">
+        select * from dish_review where order_id = #{orderId} and dish_id = #{dishId} and user_id = #{userId}
+    </select>
+
+    <select id="countByOrderAndUser" resultType="int">
+        select count(*) from dish_review where order_id = #{orderId} and user_id = #{userId}
+    </select>
+
+    <delete id="deleteById">
+        delete from dish_review where id = #{id}
+    </delete>
+
+    <update id="updateStatus">
+        update dish_review
+        set status = #{status},
+            update_time = #{updateTime}
+        where id = #{id}
+    </update>
+
+    <update id="updateLikeCount">
+        update dish_review
+        set like_count = greatest(ifnull(like_count, 0) + #{delta}, 0),
+            update_time = now()
+        where id = #{id}
+    </update>
+</mapper>

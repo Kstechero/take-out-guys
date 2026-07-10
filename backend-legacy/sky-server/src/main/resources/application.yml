@@ -1,0 +1,78 @@
+server:
+  port: 8080
+
+spring:
+  profiles:
+    active: dev
+  main:
+    allow-circular-references: true
+  datasource:
+    druid:
+      driver-class-name: ${sky.datasource.driver-class-name}
+      url: jdbc:mysql://${sky.datasource.host}:${sky.datasource.port}/${sky.datasource.database}?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
+      username: ${sky.datasource.username}
+      password: ${sky.datasource.password}
+  redis:
+    host: ${sky.redis.host}
+    port: ${sky.redis.port}
+    database: ${sky.redis.database}
+    password: ${sky.redis.password}
+
+mybatis:
+  #mapper配置文件
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.sky.entity
+  configuration:
+    #开启驼峰命名
+    map-underscore-to-camel-case: true
+
+logging:
+  level:
+    com:
+      sky:
+        mapper: debug
+        service: info
+        controller: info
+
+sky:
+  ai:
+    # GX10 上的 vLLM 提供 OpenAI 兼容协议。密钥必须通过环境变量注入，禁止提交到仓库。
+    base-url: ${GX10_AI_BASE_URL:http://ai.tunayoshi.top:8000/v1}
+    api-key: ${GX10_AI_API_KEY:}
+    model: ${GX10_AI_MODEL:ornith}
+    connect-timeout: ${GX10_AI_CONNECT_TIMEOUT:10000}
+    read-timeout: ${GX10_AI_READ_TIMEOUT:120000}
+    max-tokens: ${GX10_AI_MAX_TOKENS:2048}
+    temperature: ${GX10_AI_TEMPERATURE:0.3}
+    rag:
+      enabled: ${GX10_AI_RAG_ENABLED:true}
+      top-k: ${GX10_AI_RAG_TOP_K:4}
+      max-segment-length: ${GX10_AI_RAG_MAX_SEGMENT_LENGTH:600}
+      max-overlap: ${GX10_AI_RAG_MAX_OVERLAP:80}
+      max-segments-per-source: ${GX10_AI_RAG_MAX_SEGMENTS_PER_SOURCE:120}
+      source-paths:
+        - docs/agent.md
+        - docs/SKY_TAKE_OUT_FULL_PROJECT_README.md
+        - docs/PROJECT_DEVELOPMENT_LOG.md
+        - backend/database/数据库设计文档.md
+    mcp:
+      enabled: ${GX10_AI_MCP_ENABLED:true}
+      server-name: ${GX10_AI_MCP_SERVER_NAME:takeout-guys-enterprise}
+      server-version: ${GX10_AI_MCP_SERVER_VERSION:1.0.0}
+  jwt:
+    # 设置jwt签名加密时使用的秘钥
+    admin-secret-key: itcast
+    # 设置jwt过期时间
+    admin-ttl: 7200000
+    # 设置前端传递过来的令牌名称
+    admin-token-name: token
+    user-secret-key: jwdlh
+    # 用户端 JWT 有效期：2 小时（单位：毫秒）
+    user-ttl: 7200000
+    user-token-name: authentication
+
+  wechat:
+    appid: ${sky.wechat.appid}
+    secret: ${sky.wechat.secret}
+
+

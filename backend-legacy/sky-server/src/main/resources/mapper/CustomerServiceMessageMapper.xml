@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sky.mapper.CustomerServiceMessageMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into customer_service_message(session_id, sender_type, sender_id, message_type, content, flagged, read_status, create_time)
+        values(#{sessionId}, #{senderType}, #{senderId}, #{messageType}, #{content}, #{flagged}, #{readStatus}, #{createTime})
+    </insert>
+
+    <select id="listBySessionId" resultType="com.sky.vo.CustomerServiceMessageVO">
+        select m.id,
+               m.session_id as sessionId,
+               m.sender_type as senderType,
+               m.sender_id as senderId,
+               case
+                   when m.sender_type = 'user' then u.name
+                   when m.sender_type = 'admin' then e.name
+                   else m.sender_type
+               end as senderName,
+               m.message_type as messageType,
+               m.content,
+               m.flagged,
+               m.read_status as readStatus,
+               m.create_time as createTime
+        from customer_service_message m
+        left join user u on m.sender_type = 'user' and u.id = m.sender_id
+        left join employee e on m.sender_type = 'admin' and e.id = m.sender_id
+        where m.session_id = #{sessionId}
+        <if test="lastMessageId != null">and m.id &gt; #{lastMessageId}</if>
+        order by m.id asc
+    </select>
+
+    <update id="markAsReadBySessionAndSenderType">
+        update customer_service_message
+        set read_status = 1
+        where session_id = #{sessionId}
+          and sender_type = #{senderType}
+          and read_status = 0
+    </update>
+</mapper>
