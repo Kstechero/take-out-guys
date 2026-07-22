@@ -4,7 +4,7 @@
 
 每个 Codex task 开始时，都要求先阅读：
 
-1. `docs/LANGCHAIN_RAG_AGENT_MICROSERVICE_PLAN.md`
+1. `docs/agent-service/LANGCHAIN_RAG_AGENT_MICROSERVICE_PLAN.md`
 2. 本目录中与任务相关的范围、架构、契约、工具、RAG、提示词与测试文档
 3. `agent-service/AGENTS.md`
 4. 如涉及 Java 内部 API，再阅读对应 Controller、Service、DTO 和现有 Tool Executor
@@ -15,14 +15,12 @@
 
 按下列小切片依次开发，每一项单独提交和验证：
 
-1. Python 工程骨架、配置和 `/health`；
-2. Java Internal API 服务认证与一个只读 `menu_search`；
-3. Python `SpringInternalClient` 与 `menu_search` Tool；
-4. 文档入库、Chroma、检索和引用输出；
-5. 用户侧只读 LangGraph 与 SSE；
-6. 确认状态机与一个 `change_cart` 写工具；
-7. 管理端只读运营图；
-8. Eval、Docker Compose、灰度与回退。
+1. P0：Python 工程骨架、配置、服务认证、合同和 `/health`；
+2. P1：用户 `user_support_agent`、只读 Tool、RAG、同步和 SSE；
+3. P2：确认状态机、持久化 checkpointer、`thread_id` 恢复和用户写工具；
+4. P3：独立 `admin_operations_agent`、管理只读 Tool 和运营 RAG；
+5. P4：逐个开放管理受控写 Tool，补齐预览、审批、审计和幂等；
+6. P5：Eval、trace、告警、灰度、回滚和运维手册。
 
 ## 多 Agent 协作
 
@@ -33,7 +31,7 @@
 | 架构 Agent | `docs/agent-service/` | 契约、ADR、工具目录一致 |
 | Java Agent | `backend/` | 鉴权、业务校验、MVC/Service 测试 |
 | Python Agent | `agent-service/app/` | schema、Tool、Graph、pytest |
-| RAG Agent | `agent-service/rag/`、`knowledge/` | 入库、检索、来源、eval |
+| RAG Agent | `agent-service/app/rag/`、`docs/agent-service/knowledge/` | 入库、检索、来源、eval |
 | 测试 Agent | `agent-service/tests/`、`evals/` | Mock/集成/安全测试报告 |
 | 集成 Agent | 少量跨模块文件 | Compose、回归、冲突处理 |
 
@@ -43,7 +41,7 @@
 
 ```text
 你在 F:\\sky-takeout-agent 工作。
-先阅读 docs/LANGCHAIN_RAG_AGENT_MICROSERVICE_PLAN.md、
+先阅读 docs/agent-service/LANGCHAIN_RAG_AGENT_MICROSERVICE_PLAN.md、
 docs/agent-service/02-internal-api-contract.md、
 docs/agent-service/03-tool-catalog.md、agent-service/AGENTS.md。
 

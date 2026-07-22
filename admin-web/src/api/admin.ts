@@ -25,6 +25,32 @@ export const completeOrder = (id: number) => request.put(`/order/complete/${id}`
 export const getShopStatus = () => request.get('/shop/status')
 export const setShopStatus = (status: number) => request.put(`/shop/${status}`)
 export const getAiHealth = () => request.get('/ai/health')
+export const getAdminAgentSessions = () => request.get('/ai/session/list')
+export const getAdminAgentMessages = (sessionId: number) => request.get(`/ai/session/${sessionId}/messages`)
+export const deleteAdminAgentSession = (sessionId: number) => request.delete(`/ai/session/${sessionId}`)
+
+export interface AdminAgentChatPayload {
+  sessionId: number | null
+  message: string
+  context?: Record<string, unknown>
+}
+
+export const streamAdminAgentChat = (data: AdminAgentChatPayload) =>
+  fetch(`${import.meta.env.VITE_API_BASE}/ai/chat/stream`, {
+    method: 'POST',
+    headers: {
+      token: localStorage.getItem('sky_admin_token') || '',
+      Accept: 'text/event-stream',
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(data)
+  })
+export const resumeAdminAgentChat = (data: {
+  sessionId: number
+  confirmationToken: string
+  decision: 'approve' | 'reject' | 'edit'
+  editedArguments?: Record<string, unknown> | null
+}) => request.post('/ai/chat/resume', data)
 export const getTurnoverReport = (begin: string, end: string) => request.get('/report/turnoverStatistics', { params: { begin, end } })
 export const getOrderReport = (begin: string, end: string) => request.get('/report/ordersStatistics', { params: { begin, end } })
 export const getUserReport = (begin: string, end: string) => request.get('/report/userStatistics', { params: { begin, end } })

@@ -64,8 +64,9 @@ async function refreshAiHealth() {
   try {
     const res: any = await getAiHealth()
     const health = res.data || {}
-    aiStatus.value = health.status === 'UP' ? 'up' : 'down'
-    aiStatusDetail.value = `${health.provider || 'AI'} · ${health.model || 'unknown'} · ${health.status || 'UNKNOWN'}`
+    const status = String(health.status || '').toUpperCase()
+    aiStatus.value = ['OK', 'UP'].includes(status) ? 'up' : 'down'
+    aiStatusDetail.value = `${health.service || health.provider || 'agent-service'} · ${health.llm_model || health.model || 'unknown'} · ${health.status || 'UNKNOWN'}`
   } catch {
     aiStatus.value = 'down'
     aiStatusDetail.value = 'GX10 · ornith · 连接失败'
@@ -73,8 +74,12 @@ async function refreshAiHealth() {
 }
 
 onMounted(async () => {
-  const res: any = await getShopStatus()
-  shopOpen.value = Number(res.data) === 1
+  try {
+    const res: any = await getShopStatus()
+    shopOpen.value = Number(res.data) === 1
+  } catch {
+    shopOpen.value = false
+  }
   await refreshAiHealth()
 })
 </script>

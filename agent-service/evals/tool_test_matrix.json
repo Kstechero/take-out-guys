@@ -1,0 +1,20 @@
+{
+  "required_dimensions": ["success", "empty", "forbidden", "invalid", "timeout"],
+  "tools": [
+    "menu_search", "get_shop_status", "check_sensitive_words", "search_service_knowledge",
+    "list_recent_orders", "get_order_detail", "get_cart", "list_addresses",
+    "list_available_coupons", "check_review_draft", "add_to_cart", "update_cart_item",
+    "remove_from_cart", "clear_cart", "claim_coupon", "query_business_overview",
+    "search_operational_knowledge", "admin_order_search", "admin_order_detail",
+    "admin_menu_search", "admin_set_meal_search", "admin_coupon_search",
+    "admin_review_search", "set_shop_status", "update_order", "manage_coupon",
+    "create_admin_dish", "update_admin_dish", "create_admin_coupon"
+  ],
+  "shared_evidence": {
+    "success": ["test_tool_schema.py", "test_admin_tools.py", "backend InternalAgent controller tests"],
+    "empty": ["typed Pydantic result models", "RAG no-evidence tests", "empty collection contract tests"],
+    "forbidden": ["registry actor isolation", "InternalAgentAuthInterceptorTest", "confirmation actor/session binding"],
+    "invalid": ["Pydantic args_schema", "Java validation error mapping", "bounded admin filter tests"],
+    "timeout": ["SpringInternalApiClient shared timeout/retry tests", "circuit breaker tests"]
+  }
+}

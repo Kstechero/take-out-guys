@@ -1,0 +1,8 @@
+{
+  "schema_version": "1.0",
+  "rules": [
+    {"event": "confirmation", "action": "display_preview_and_wait", "must_not": "execute_before_approval"},
+    {"event": "citation", "action": "display_title_source_and_updated_at"},
+    {"event": "unavailable", "action": "show_retry_or_human_support"}
+  ]
+}

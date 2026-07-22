@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.sky.mapper.CouponMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into coupon(name,type,discount_amount,minimum_amount,total_count,remaining_count,per_user_limit,
+            valid_from,valid_until,status,description,create_time,update_time,create_user,update_user)
+        values(#{name},#{type},#{discountAmount},#{minimumAmount},#{totalCount},#{remainingCount},#{perUserLimit},
+            #{validFrom},#{validUntil},#{status},#{description},#{createTime},#{updateTime},#{createUser},#{updateUser})
+    </insert>
+    <select id="pageQuery" resultType="com.sky.entity.Coupon">
+        select * from coupon
+        <where>
+            <if test="name != null and name != ''">and name like concat('%',#{name},'%')</if>
+            <if test="status != null">and status=#{status}</if>
+        </where>
+        order by create_time desc
+    </select>
+    <select id="getById" resultType="com.sky.entity.Coupon">select * from coupon where id=#{id}</select>
+    <select id="getByIdForUpdate" resultType="com.sky.entity.Coupon">select * from coupon where id=#{id} for update</select>
+    <update id="update">
+        update coupon set name=#{name},type=#{type},discount_amount=#{discountAmount},minimum_amount=#{minimumAmount},
+            total_count=#{totalCount},remaining_count=#{remainingCount},per_user_limit=#{perUserLimit},valid_from=#{validFrom},
+            valid_until=#{validUntil},status=#{status},description=#{description},update_time=#{updateTime},update_user=#{updateUser}
+        where id=#{id}
+    </update>
+    <update id="decreaseStock">update coupon set remaining_count=remaining_count-1 where id=#{id} and remaining_count&gt;0</update>
+    <update id="updateStatusIfExpected">
+        update coupon set status=#{targetStatus},update_time=now(),update_user=#{updateUser}
+        where id=#{id} and status=#{expectedStatus}
+    </update>
+    <delete id="deleteById">delete from coupon where id=#{id}</delete>
+    <select id="availableForReceive" resultType="com.sky.entity.Coupon">
+        select c.* from coupon c
+        where c.status=1 and c.remaining_count&gt;0 and now() between c.valid_from and c.valid_until
+          and (select count(*) from user_coupon uc where uc.user_id=#{userId} and uc.coupon_id=c.id) &lt; c.per_user_limit
+        order by c.valid_until asc,c.id desc
+    </select>
+    <select id="availableForOrder" resultType="com.sky.entity.Coupon">
+        select c.* from coupon c inner join user_coupon uc on uc.coupon_id=c.id
+        where uc.user_id=#{userId} and uc.status=0 and uc.expire_time&gt;now()
+          and c.status=1 and now() between c.valid_from and c.valid_until and c.minimum_amount&lt;=#{amount}
+        order by c.discount_amount desc,c.valid_until asc
+    </select>
+</mapper>

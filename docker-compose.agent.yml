@@ -1,0 +1,81 @@
+services:
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - agent-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: agent_state
+      POSTGRES_USER: agent
+      POSTGRES_PASSWORD: ${AGENT_POSTGRES_PASSWORD}
+    volumes:
+      - agent-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agent -d agent_state"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      AGENT_SERVICE_BASE_URL: http://agent-service:8000
+      AGENT_SERVICE_AUTH_TOKEN: ${AGENT_SERVICE_AUTH_TOKEN}
+      AGENT_INTERNAL_AUTH_TOKEN: ${AGENT_INTERNAL_AUTH_TOKEN}
+      SKY_DATASOURCE_HOST: host.docker.internal
+      SKY_REDIS_HOST: redis
+      SKY_REDIS_PASSWORD: ""
+    ports: ["8080:8080"]
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  agent-service:
+    build:
+      context: .
+      dockerfile: agent-service/Dockerfile
+    environment:
+      APP_ENV: production
+      SPRING_INTERNAL_BASE_URL: http://backend:8080
+      SPRING_INTERNAL_AUTH_TOKEN: ${AGENT_INTERNAL_AUTH_TOKEN}
+      AGENT_SERVICE_AUTH_TOKEN: ${AGENT_SERVICE_AUTH_TOKEN}
+      LLM_BASE_URL: ${LLM_BASE_URL}
+      LLM_API_KEY: ${LLM_API_KEY}
+      LLM_MODEL: ${LLM_MODEL:-qwen36}
+      RAG_KNOWLEDGE_DIR: /knowledge
+      RAG_INDEX_PATH: /state/rag-index.json
+      CONFIRMATION_STORE_PATH: /state/confirmations.sqlite3
+      GRAPH_CHECKPOINT_PATH: /state/graph-checkpoints.sqlite3
+      GRAPH_CHECKPOINT_POSTGRES_DSN: postgresql://agent:${AGENT_POSTGRES_PASSWORD}@postgres:5432/agent_state
+      RATE_LIMIT_REQUESTS_PER_MINUTE: ${RATE_LIMIT_REQUESTS_PER_MINUTE:-120}
+    volumes:
+      - agent-state:/state
+    ports: ["8000:8000"]
+    depends_on:
+      backend:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    command: ["--config.file=/etc/prometheus/prometheus.yml"]
+    volumes:
+      - ./deploy/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports: ["9090:9090"]
+    depends_on: [agent-service]
+
+volumes:
+  agent-redis:
+  agent-state:
+  agent-postgres:

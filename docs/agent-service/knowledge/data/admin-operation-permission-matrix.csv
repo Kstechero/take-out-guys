@@ -1,0 +1,10 @@
+﻿role,domain,operation,scope,confirmation,risk_level,audit_required
+store_operator,menu,read,assigned_store,no,low,yes
+store_operator,menu,update_price,assigned_store,yes,medium,yes
+store_operator,order,read,assigned_store,no,low,yes
+store_operator,order,update_status,assigned_store,yes,high,yes
+regional_manager,menu,update_price,region,yes,high,yes
+regional_manager,promotion,update_rule,region,yes,high,yes
+regional_manager,order,batch_refund,region,yes,critical,yes
+customer_service,order,read,assigned_queue,no,low,yes
+customer_service,order,create_refund_preview,assigned_queue,yes,medium,yes

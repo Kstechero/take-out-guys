@@ -1,0 +1,35 @@
+{
+  "dataset": "simulated_order_events",
+  "generated_at": "2026-07-20T15:30:00+08:00",
+  "source_of_truth": "spring_internal_api",
+  "warning": "仅用于 Tool schema、事件解析和测试，不代表实时订单",
+  "events": [
+    {
+      "event_id": "EVT-20260720-0001",
+      "order_id": "ORD-20260720-1001",
+      "event_type": "ORDER_CONFIRMED",
+      "occurred_at": "2026-07-20T12:05:12+08:00",
+      "store_id": "STORE-SH-001",
+      "actor_visibility": "owner_or_admin",
+      "payload": {"status": "CONFIRMED", "estimated_ready_minutes": 25}
+    },
+    {
+      "event_id": "EVT-20260720-0002",
+      "order_id": "ORD-20260720-1001",
+      "event_type": "ORDER_PREPARING",
+      "occurred_at": "2026-07-20T12:08:33+08:00",
+      "store_id": "STORE-SH-001",
+      "actor_visibility": "owner_or_admin",
+      "payload": {"status": "PREPARING", "kitchen_ticket": "KOT-1001"}
+    },
+    {
+      "event_id": "EVT-20260720-0003",
+      "order_id": "ORD-20260720-1002",
+      "event_type": "DELIVERY_DELAY_REPORTED",
+      "occurred_at": "2026-07-20T18:42:09+08:00",
+      "store_id": "STORE-HZ-002",
+      "actor_visibility": "owner_or_admin",
+      "payload": {"status": "DELIVERING", "delay_minutes": 18, "reason_code": "NO_COURIER"}
+    }
+  ]
+}

@@ -49,6 +49,7 @@ export const getOrderAvailableCoupons = params => request({ url: '/user/coupon/o
 
 // AI Agent
 export const aiChat = params => request({ url: '/user/ai/chat', method: 'POST', params, showError: false })
+export const resumeAiChat = params => request({ url: '/user/ai/chat/resume', method: 'POST', params, showError: false })
 export const aiChatStream = params => request({ url: '/user/ai/chat/stream', params, showError: false })
 export const aiRecommend = params => request({ url: '/user/ai/recommend', method: 'POST', params, showError: false })
 export const aiWriteReview = params => request({ url: '/user/ai/review/write', method: 'POST', params, showError: false })

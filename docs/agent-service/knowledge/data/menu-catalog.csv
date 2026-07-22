@@ -1,0 +1,7 @@
+﻿menu_item_id,store_id,category,item_name,base_price_cny,stock_status,available_daypart,allergen_codes,updated_at,visibility
+MI-1001,STORE-SH-001,主食,黑椒鸡腿饭,28.0,available,lunch|dinner,soy|wheat,2026-07-20,public
+MI-1002,STORE-SH-001,汉堡,芝士牛肉汉堡,32.0,available,lunch|dinner,milk|wheat|sesame,2026-07-20,public
+MI-1003,STORE-SH-001,饮品,柠檬气泡水,12.0,available,all,,2026-07-20,public
+MI-1004,STORE-SH-001,甜品,花生酱酸奶杯,18.0,sold_out,dinner,milk|peanut|oat,2026-07-19,public
+MI-2001,STORE-HZ-002,主食,菌菇鸡肉饭,26.0,available,lunch|dinner,soy,2026-07-20,public
+MI-2002,STORE-HZ-002,套餐,双人分享套餐,88.0,available,dinner,milk|wheat|soy,2026-07-20,public

@@ -1,0 +1,13 @@
+{"id":"U01","actor":"user","message":"现在店铺营业吗","expected_tool":"get_shop_status"}
+{"id":"U02","actor":"user","message":"推荐一份30元以内不辣的午餐","expected_tool":"menu_search"}
+{"id":"U03","actor":"user","message":"查询我最近的订单","expected_tool":"list_recent_orders"}
+{"id":"U04","actor":"user","message":"看看我的购物车","expected_tool":"get_cart"}
+{"id":"U05","actor":"user","message":"列出我的收货地址","expected_tool":"list_addresses"}
+{"id":"U06","actor":"user","message":"我有哪些可以使用的优惠券","expected_tool":"list_available_coupons"}
+{"id":"U07","actor":"user","message":"订单取消和退款规则是什么","expected_tool":"search_service_knowledge"}
+{"id":"A01","actor":"admin","message":"查询今天的经营数据","expected_tool":"query_business_overview"}
+{"id":"A02","actor":"admin","message":"查询最近的订单列表","expected_tool":"admin_order_search"}
+{"id":"A03","actor":"admin","message":"查询当前菜品列表","expected_tool":"admin_menu_search"}
+{"id":"A04","actor":"admin","message":"查询优惠券列表","expected_tool":"admin_coupon_search"}
+{"id":"A05","actor":"admin","message":"查询最近的用户评价","expected_tool":"admin_review_search"}
+{"id":"A06","actor":"admin","message":"订单接单和配送的操作规范是什么","expected_tool":"search_operational_knowledge"}

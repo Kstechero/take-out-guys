@@ -1,4 +1,4 @@
-import { baseUrl } from './env'
+import { getApiBaseUrl } from './env'
 
 /**
  * Takeout Guys 小程序统一请求封装。
@@ -8,7 +8,7 @@ export function request({ url = '', params = {}, method = 'GET', showError = tru
 	const token = uni.getStorageSync('user_token') || ''
 	return new Promise((resolve, reject) => {
 		uni.request({
-			url: baseUrl + url,
+			url: getApiBaseUrl() + url,
 			data: params,
 			method,
 			header: {
@@ -22,6 +22,11 @@ export function request({ url = '', params = {}, method = 'GET', showError = tru
 				if (res.statusCode === 401) {
 					uni.removeStorageSync('user_token')
 					showError && uni.showToast({ title: '登录已过期，请重新登录', icon: 'none' })
+					reject(body)
+					return
+				}
+				if (res.statusCode < 200 || res.statusCode >= 300) {
+					showError && uni.showToast({ title: body.msg || 'Request failed', icon: 'none' })
 					reject(body)
 					return
 				}

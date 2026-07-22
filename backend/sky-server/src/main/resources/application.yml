@@ -1,0 +1,66 @@
+server:
+  port: 8080
+
+spring:
+  profiles:
+    active: dev
+  main:
+    allow-circular-references: true
+  datasource:
+    druid:
+      driver-class-name: ${sky.datasource.driver-class-name}
+      url: jdbc:mysql://${sky.datasource.host}:${sky.datasource.port}/${sky.datasource.database}?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
+      username: ${sky.datasource.username}
+      password: ${sky.datasource.password}
+  redis:
+    host: ${sky.redis.host}
+    port: ${sky.redis.port}
+    database: ${sky.redis.database}
+    password: ${sky.redis.password}
+
+mybatis:
+  #mapper閰嶇疆鏂囦欢
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.sky.entity
+  configuration:
+    #寮€鍚┘宄板懡鍚?
+    map-underscore-to-camel-case: true
+
+logging:
+  charset:
+    console: GBK
+    file: UTF-8
+  level:
+    com:
+      sky:
+        mapper: debug
+        service: info
+        controller: info
+
+sky:
+  agent-service:
+    base-url: ${AGENT_SERVICE_BASE_URL:http://127.0.0.1:8000}
+    # Java -> Python and Python -> Java must use different shared secrets.
+    # Override these values with environment variables outside local development.
+    auth-token: ${AGENT_SERVICE_AUTH_TOKEN:local-agent-token}
+    internal-auth-token: ${AGENT_INTERNAL_AUTH_TOKEN:local-internal-token}
+    internal-writes-enabled: ${AGENT_INTERNAL_WRITES_ENABLED:true}
+    connect-timeout: ${AGENT_SERVICE_CONNECT_TIMEOUT:3000}
+    read-timeout: ${AGENT_SERVICE_READ_TIMEOUT:120000}
+  jwt:
+    # 璁剧疆jwt绛惧悕鍔犲瘑鏃朵娇鐢ㄧ殑绉橀挜
+    admin-secret-key: itcast
+    # 璁剧疆jwt杩囨湡鏃堕棿
+    admin-ttl: 7200000
+    # 璁剧疆鍓嶇浼犻€掕繃鏉ョ殑浠ょ墝鍚嶇О
+    admin-token-name: token
+    user-secret-key: jwdlh
+    # 鐢ㄦ埛绔?JWT 鏈夋晥鏈燂細2 灏忔椂锛堝崟浣嶏細姣锛?
+    user-ttl: 7200000
+    user-token-name: authentication
+
+  wechat:
+    appid: ${sky.wechat.appid}
+    secret: ${sky.wechat.secret}
+
+

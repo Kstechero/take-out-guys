@@ -24,6 +24,15 @@ agent-service/.chroma/
 agent-service/data/
 agent-service/vectorstore/
 agent-service/model-cache/
+data/*.sqlite3
+*.integration.log
+*.integration.err.log
+
+# Java and frontend build outputs
+**/target/
+**/node_modules/
+**/dist/
+tmp/
 
 # Editors and OS files
 .DS_Store

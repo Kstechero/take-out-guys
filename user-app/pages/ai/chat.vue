@@ -39,7 +39,17 @@
 		<scroll-view class="messages" scroll-y :scroll-into-view="lastMessageId">
 			<view v-for="(item, index) in messages" :key="index" :id="'message-' + index" :class="['message', item.role]">
 				<image v-if="item.role === 'assistant'" src="../../static/takeout-guys-bot.png"></image>
-				<view class="bubble">{{ item.content }}<text v-if="loading && index === messages.length - 1" class="cursor">▍</text></view>
+				<view class="bubble">
+					<text>{{ item.content }}</text><text v-if="loading && index === messages.length - 1" class="cursor">▍</text>
+					<view v-if="item.confirmation" class="confirmation-card">
+						<text class="confirmation-expire">请在 {{ item.confirmation.expires_at || item.confirmation.expiresAt }} 前处理</text>
+						<view class="confirmation-actions">
+							<button :disabled="loading" @click="resolveConfirmation(item, 'reject')">取消</button>
+							<button v-if="isQuantityEditable(item.confirmation)" :disabled="loading" @click="editConfirmation(item)">修改数量</button>
+							<button class="approve" :disabled="loading" @click="resolveConfirmation(item, 'approve')">确认执行</button>
+						</view>
+					</view>
+				</view>
 			</view>
 			<view class="quick-title">你可以这样问</view>
 			<view class="quick-list">
@@ -63,7 +73,7 @@
 </template>
 
 <script>
-import { aiChat, deleteAiSession, getAiSessions } from '../api/api.js'
+import { aiChat, deleteAiSession, getAiSessions, resumeAiChat } from '../api/api.js'
 
 const DEFAULT_MESSAGE = {
 	role: 'assistant',
@@ -177,16 +187,58 @@ export default {
 			this.messages.push({ role: 'user', content })
 			this.input = ''
 			this.loading = true
-			const answer = { role: 'assistant', content: '' }
+			const answer = { role: 'assistant', content: '', confirmation: null }
 			this.messages.push(answer)
 			try {
 				const res = await aiChat({ sessionId: this.sessionId, message: content })
 				if (res.data?.sessionId) this.sessionId = res.data.sessionId
 				answer.content = this.extractReply(res.data)
+				answer.confirmation = res.data?.confirmation || null
 				this.saveMessages(this.sessionId, this.messages)
 				await this.loadSessions()
 			} catch (error) {
 				answer.content = error?.msg || '智能客服暂时不可用，请稍后再试。若问题较复杂，建议转人工客服。'
+			} finally {
+				this.loading = false
+			}
+		},
+		isQuantityEditable(confirmation) {
+			return confirmation && ['add', 'update'].includes(confirmation.action)
+		},
+		async editConfirmation(item) {
+			if (!item.confirmation || this.loading) return
+			const result = await new Promise(resolve => {
+				uni.showModal({
+					title: '修改数量',
+					placeholderText: '请输入 1–20 的整数',
+					editable: true,
+					success: resolve,
+					fail: () => resolve({ confirm: false })
+				})
+			})
+			if (!result.confirm) return
+			const quantity = Number(result.content)
+			if (!Number.isInteger(quantity) || quantity < 1 || quantity > 20) {
+				uni.showToast({ title: '数量必须是 1–20 的整数', icon: 'none' })
+				return
+			}
+			await this.resolveConfirmation(item, 'edit', { quantity })
+		},
+		async resolveConfirmation(item, decision, editedArguments = null) {
+			if (!item.confirmation || this.loading || !this.sessionId) return
+			this.loading = true
+			try {
+				const res = await resumeAiChat({
+					sessionId: this.sessionId,
+					confirmationToken: item.confirmation.token,
+					decision,
+					editedArguments
+				})
+				item.content = this.extractReply(res.data)
+				item.confirmation = res.data?.confirmation || null
+				this.saveMessages(this.sessionId, this.messages)
+			} catch (error) {
+				uni.showToast({ title: error?.msg || '确认操作失败，请重新发起', icon: 'none' })
 			} finally {
 				this.loading = false
 			}
@@ -226,6 +278,11 @@ export default {
 .bubble{max-width:72%;padding:20rpx 23rpx;background:#fff;border-radius:8rpx 26rpx 26rpx 26rpx;box-shadow:0 7rpx 22rpx rgba(16,26,42,.06);font-size:26rpx;line-height:1.65}
 .user .bubble{background:#ff4b12;color:#fff;border-radius:26rpx 8rpx 26rpx 26rpx}
 .cursor{color:#ff4b12}
+.confirmation-card{display:flex;flex-direction:column;margin-top:18rpx;padding-top:16rpx;border-top:1rpx solid #ece9e4}
+.confirmation-expire{font-size:20rpx;color:#8d948f}
+.confirmation-actions{display:flex;justify-content:flex-end;gap:12rpx;margin-top:14rpx}
+.confirmation-actions button{width:auto;height:56rpx;line-height:56rpx;margin:0;padding:0 20rpx;border-radius:18rpx;background:#eef0ed;color:#49524d;font-size:22rpx}
+.confirmation-actions button.approve{background:#ff4b12;color:#fff}
 .quick-title{font-size:21rpx;color:#969d99;margin:35rpx 0 12rpx 70rpx}
 .quick-list{margin-left:70rpx}
 .quick-list view{display:inline-block;padding:11rpx 17rpx;margin:0 8rpx 10rpx 0;background:#fff;border:1rpx solid #e7e8e4;border-radius:24rpx;color:#5f6963;font-size:21rpx}

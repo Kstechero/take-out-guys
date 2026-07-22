@@ -1,0 +1,64 @@
+{
+  "sources": [
+    {
+      "path": "admin/customer-service-and-risk-handbook.pdf",
+      "title": "客服培训与风险手册",
+      "maintainer": "客服运营组",
+      "updated_at": "2026-07-21",
+      "domain": "customer_service_risk",
+      "visibility": "admin",
+      "status": "approved",
+      "source_refs": "internal-handbook"
+    },
+    {
+      "path": "admin/restaurant-operations-handbook.pdf",
+      "title": "餐厅运营手册",
+      "maintainer": "运营组",
+      "updated_at": "2026-07-21",
+      "domain": "restaurant_operations",
+      "visibility": "admin",
+      "status": "approved",
+      "source_refs": "internal-handbook"
+    },
+    {
+      "path": "data/takeout-rag-business-dataset.xlsx",
+      "title": "外卖业务规则矩阵",
+      "maintainer": "Agent Service",
+      "updated_at": "2026-07-21",
+      "domain": "business_rules",
+      "visibility": "admin",
+      "status": "approved",
+      "source_refs": "generated-corpus"
+    },
+    {
+      "path": "data/admin-operation-permission-matrix.csv",
+      "title": "管理操作权限矩阵",
+      "maintainer": "平台安全组",
+      "updated_at": "2026-07-21",
+      "domain": "admin_permissions",
+      "visibility": "admin",
+      "status": "approved",
+      "source_refs": "generated-corpus"
+    },
+    {
+      "path": "data/agent-event-handling-policy.json",
+      "title": "Agent 事件处理规则",
+      "maintainer": "Agent Service",
+      "updated_at": "2026-07-22",
+      "domain": "agent_events",
+      "visibility": "public",
+      "status": "approved",
+      "source_refs": "agent-event-contract"
+    },
+    {
+      "path": "data/order-event-samples.json",
+      "title": "订单事件测试样例",
+      "maintainer": "Agent Service",
+      "updated_at": "2026-07-20",
+      "domain": "test_data",
+      "visibility": "admin",
+      "status": "excluded",
+      "source_refs": "test-only"
+    }
+  ]
+}

@@ -29,8 +29,8 @@ This file applies to `agent-service/` and all of its subdirectories.
 
 ```powershell
 python -m pip install -e ".[dev]"
-uvicorn app.main:app --reload
-pytest
+python -m uvicorn app.main:app --reload
+python -m pytest
 ```
 
 ## Before Implementing

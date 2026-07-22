@@ -1,24 +1,21 @@
 # Takeout Guys Agent Service
 
-This repository is now the starting point for the standalone Python Agent
-microservice planned in `docs/agent-service/`.
-
-The legacy Spring Boot implementation, admin web, user app, old Markdown notes,
-and Apifox JSON exports are archived on the `legacy/java-agent-backend` branch.
+This repository contains the P0–P4 implementation of the standalone Python
+Agent service and its Spring Boot, admin web, and user app adapters.
 
 ## Current Scope
 
-- Build a FastAPI + LangChain + LangGraph Agent Service.
+- Run a FastAPI + LangChain + LangGraph Agent Service with persistent checkpoints.
 - Keep Spring Boot as the business data and write-operation boundary.
 - Do not connect this service directly to the takeout MySQL or Redis business
   stores.
-- Treat the current code as a scaffold. RAG, tools, and Java integration still
-  need implementation.
+- Provide user read/RAG tools, confirmed cart and coupon writes, admin read tools,
+  and gray-controlled confirmed management writes with audit and idempotency.
 
 ## Project Structure
 
 ```text
-sky-takeout-agent/
+takeout-guys-agent/
 ├─ agent-service/           # Python microservice scaffold
 │  ├─ app/
 │  │  ├─ api/               # FastAPI routes
@@ -34,17 +31,21 @@ sky-takeout-agent/
 │  ├─ scripts/
 │  ├─ pyproject.toml
 │  └─ Dockerfile
-└─ docs/agent-service/      # product, architecture, contracts, tests, ADRs
+├─ backend/                # 权威 Spring Boot 业务边界与 Agent 适配器
+├─ backend-legacy/         # 只读历史迁移基线，不再作为运行或新增业务目录
+├─ admin-web/              # admin Agent confirmation UI
+├─ user-app/               # user Agent confirmation UI
+└─ docs/agent-service/     # product, architecture, contracts, tests, ADRs
 ```
 
 ## Local Development
 
+Use the system Python directly. Python 3.11 or newer is required.
+
 ```powershell
 cd agent-service
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
 python -m pip install -e ".[dev]"
-uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload
 ```
 
 Health check:
@@ -57,7 +58,7 @@ Tests:
 
 ```powershell
 cd agent-service
-pytest
+python -m pytest
 ```
 
 ## Required Reading

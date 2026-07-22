@@ -1,0 +1,69 @@
+sky:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    host: 127.0.0.1
+    port: 3306
+    database: sky_take_out
+    username: root
+    password: 123456
+
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    database: 0
+    password: 123456
+
+  jwt:
+    admin-secret-key: itcast
+    admin-ttl: 7200000
+    admin-token-name: token
+    user-secret-key: jwdlh
+    user-ttl: 7200000
+    user-token-name: authentication
+
+  wechat:
+    appid: your-wechat-appid
+    secret: your-wechat-secret
+    mchid: your-wechat-mchid
+    mch-serial-no: your-wechat-mch-serial-no
+    private-key-file-path: cert/apiclient_key.pem
+    api-v3-key: your-wechat-api-v3-key
+    we-chat-pay-cert-file-path: cert/wechatpay_cert.pem
+    notify-url: http://localhost:8080/notify/paySuccess
+    refund-notify-url: http://localhost:8080/notify/refundSuccess
+
+  alioss:
+    endpoint: oss-cn-hangzhou.aliyuncs.com
+    access-key-id: your-aliyun-access-key-id
+    access-key-secret: your-aliyun-access-key-secret
+    bucket-name: your-aliyun-oss-bucket
+
+  upload:
+    path: uploads
+
+  payment:
+    mock-enabled: true
+
+  ai:
+    base-url: http://ai.tunayoshi.top:8000/v1
+    api-key:
+    model: qwen36
+    connect-timeout: 10000
+    read-timeout: 120000
+    max-tokens: 2048
+    temperature: 0.3
+    rag:
+      enabled: true
+      top-k: 4
+      max-segment-length: 600
+      max-overlap: 80
+      max-segments-per-source: 120
+      source-paths:
+        - docs/agent.md
+        - docs/SKY_TAKE_OUT_FULL_PROJECT_README.md
+        - docs/PROJECT_DEVELOPMENT_LOG.md
+        - backend/database/数据库设计文档.md
+    mcp:
+      enabled: true
+      server-name: takeout-guys-enterprise
+      server-version: 1.0.0

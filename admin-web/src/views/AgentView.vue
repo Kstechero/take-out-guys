@@ -1,17 +1,42 @@
 <script setup lang="ts">
 import { nextTick, onMounted, reactive, ref } from 'vue'
 import { Promotion, Delete, MagicStick, Document, TrendCharts } from '@element-plus/icons-vue'
-import { getAiHealth, getBusinessData, getOrderOverview, getOrderStatistics, getServiceSessionPage } from '@/api/admin'
+import {
+  getAiHealth,
+  getAdminAgentMessages,
+  getAdminAgentSessions,
+  getBusinessData,
+  getOrderOverview,
+  getOrderStatistics,
+  getServiceSessionPage,
+  deleteAdminAgentSession,
+  resumeAdminAgentChat,
+  streamAdminAgentChat
+} from '@/api/admin'
 
-type Message = { role: 'user' | 'assistant'; content: string }
+type Confirmation = {
+  token: string
+  action?: string
+  summary: string
+  expires_at?: string
+  expiresAt?: string
+  details?: Record<string, unknown>
+}
+type Message = { role: 'user' | 'assistant'; content: string; confirmation?: Confirmation | null }
 
-const prompts = ['分析今天订单趋势', '哪些菜品值得重点推广？', '总结待处理的客服问题']
-const messages = ref<Message[]>([
-  {
-    role: 'assistant',
-    content: '我是管理端 AI Agent。你可以直接查询经营数据、订单状态、平台规则，返回内容将来自后端 Agent 接口。'
-  }
-])
+const welcomeMessage: Message = {
+  role: 'assistant',
+  content: '我是管理端 AI Agent。你可以直接查询经营数据、订单状态、平台规则，返回内容将来自后端 Agent 接口。'
+}
+
+const prompts = [
+  '分析今天订单趋势',
+  '哪些菜品值得重点推广？',
+  '新增菜品需要提供哪些信息？',
+  '帮我创建一张优惠券',
+  '总结待处理的客服问题'
+]
+const messages = ref<Message[]>([{ ...welcomeMessage }])
 
 const input = ref('')
 const sending = ref(false)
@@ -38,11 +63,34 @@ async function loadContext() {
     getServiceSessionPage({ page: 1, pageSize: 1 }).catch(() => null)
   ])
 
-  aiConnected.value = Boolean(healthRes?.data)
+  aiConnected.value = ['ok', 'UP'].includes(healthRes?.data?.status)
   Object.assign(context, businessRes?.data || {})
   Object.assign(context, overviewRes?.data || {})
   Object.assign(context, statisticsRes?.data || {})
   context.serviceSessions = serviceRes?.data?.total
+}
+
+async function restoreConversation() {
+  try {
+    const sessionsResponse: any = await getAdminAgentSessions()
+    const sessions = Array.isArray(sessionsResponse?.data) ? sessionsResponse.data : []
+    const latestSessionId = Number(sessions[0]?.id || 0)
+    if (!latestSessionId) return
+
+    const messagesResponse: any = await getAdminAgentMessages(latestSessionId)
+    const history = Array.isArray(messagesResponse?.data) ? messagesResponse.data : []
+    const restored = history.filter(
+      (item: any) => ['user', 'assistant'].includes(item?.role) && typeof item?.content === 'string'
+    ) as Message[]
+
+    sessionId.value = latestSessionId
+    messages.value = restored.length ? restored : [{ ...welcomeMessage }]
+    await nextTick()
+    chat.value?.scrollTo({ top: chat.value.scrollHeight })
+  } catch {
+    messages.value = [{ ...welcomeMessage }]
+    sessionId.value = null
+  }
 }
 
 async function send(text = input.value) {
@@ -53,24 +101,16 @@ async function send(text = input.value) {
   input.value = ''
   sending.value = true
 
-  const answer: Message = { role: 'assistant', content: '' }
+  const answer: Message = { role: 'assistant', content: '', confirmation: null }
   messages.value.push(answer)
   await nextTick()
   chat.value?.scrollTo({ top: chat.value.scrollHeight })
 
   try {
-    const response = await fetch(`${import.meta.env.VITE_API_BASE}/ai/chat/stream`, {
-      method: 'POST',
-      headers: {
-        token: localStorage.getItem('sky_admin_token') || '',
-        Accept: 'text/event-stream',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        sessionId: sessionId.value,
-        message: prompt,
-        context: {}
-      })
+    const response = await streamAdminAgentChat({
+      sessionId: sessionId.value,
+      message: prompt,
+      context: {}
     })
 
     if (!response.ok || !response.body) {
@@ -110,6 +150,11 @@ async function send(text = input.value) {
         answer.content += typeof data === 'string' ? data : data?.content || ''
       }
 
+      if (event === 'confirmation') {
+        answer.confirmation = data
+        if (!answer.content) answer.content = data?.summary || '该操作需要确认。'
+      }
+
       if (event === 'error') {
         throw new Error(data?.message || 'AI 服务异常')
       }
@@ -140,10 +185,65 @@ async function send(text = input.value) {
   }
 }
 
-function clearMessages() {
-  messages.value = [messages.value[0]]
+function canEditConfirmation(confirmation: Confirmation) {
+  return Boolean(
+    confirmation.action && ['set_shop_status', 'update_order', 'manage_coupon'].includes(confirmation.action)
+  )
+}
+
+async function editConfirmation(message: Message) {
+  if (!message.confirmation || !canEditConfirmation(message.confirmation)) return
+  const details = message.confirmation.details || {}
+  const auditReason = window.prompt('请输入新的审计理由', String(details.audit_reason || ''))
+  if (!auditReason) return
+  const editedArguments: Record<string, unknown> = { audit_reason: auditReason }
+  if (message.confirmation.action === 'set_shop_status') {
+    const status = window.prompt('新的门店状态（OPEN/CLOSED）', String(details.new_value || 'OPEN'))
+    if (!status) return
+    editedArguments.status = status.toUpperCase()
+  } else {
+    const action = window.prompt(
+      message.confirmation.action === 'update_order'
+        ? '新的订单动作（confirm/deliver/complete）'
+        : '新的优惠券动作（activate/deactivate）'
+    )
+    if (!action) return
+    editedArguments.action = action.toLowerCase()
+  }
+  await resolveConfirmation(message, 'edit', editedArguments)
+}
+
+async function resolveConfirmation(
+  message: Message,
+  decision: 'approve' | 'reject' | 'edit',
+  editedArguments: Record<string, unknown> | null = null
+) {
+  if (!message.confirmation || !sessionId.value || sending.value) return
+  sending.value = true
+  try {
+    const response: any = await resumeAdminAgentChat({
+      sessionId: sessionId.value,
+      confirmationToken: message.confirmation.token,
+      decision,
+      editedArguments
+    })
+    message.content = response?.data?.content || response?.data?.answer || '确认流程已处理。'
+    message.confirmation = response?.data?.confirmation || null
+  } catch (error: any) {
+    message.content = `确认操作失败：${error?.message || '请重新发起操作'}`
+  } finally {
+    sending.value = false
+  }
+}
+
+async function clearMessages() {
+  const currentSessionId = sessionId.value
+  messages.value = [{ ...welcomeMessage }]
   input.value = ''
   sessionId.value = null
+  if (currentSessionId) {
+    await deleteAdminAgentSession(currentSessionId).catch(() => undefined)
+  }
 }
 
 function formatCurrency(value?: number) {
@@ -154,7 +254,14 @@ function formatCount(value?: number, suffix = '') {
   return typeof value === 'number' ? `${value}${suffix}` : '--'
 }
 
-onMounted(loadContext)
+function formatConfirmationDetails(confirmation: Confirmation) {
+  if (!confirmation.details) return ''
+  return JSON.stringify(confirmation.details, null, 2)
+}
+
+onMounted(() => {
+  void Promise.all([loadContext(), restoreConversation()])
+})
 </script>
 
 <template>
@@ -205,6 +312,19 @@ onMounted(loadContext)
           <div class="bubble">
             <small>{{ message.role === 'assistant' ? 'Agent' : '你' }}</small>
             <p>{{ message.content }}<span v-if="sending && index === messages.length - 1" class="cursor"></span></p>
+            <div v-if="message.confirmation" class="confirmation-card">
+              <small>高风险操作 · {{ message.confirmation.expires_at || message.confirmation.expiresAt }}</small>
+              <pre v-if="message.confirmation.details">{{ formatConfirmationDetails(message.confirmation) }}</pre>
+              <div>
+                <button :disabled="sending" @click="resolveConfirmation(message, 'reject')">取消</button>
+                <button
+                  v-if="canEditConfirmation(message.confirmation)"
+                  :disabled="sending"
+                  @click="editConfirmation(message)"
+                >编辑后重审</button>
+                <button class="approve" :disabled="sending" @click="resolveConfirmation(message, 'approve')">确认执行</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>

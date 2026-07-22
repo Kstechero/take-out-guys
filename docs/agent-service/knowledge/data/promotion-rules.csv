@@ -1,0 +1,4 @@
+﻿promotion_id,store_scope,promotion_name,trigger_type,threshold_cny,discount_type,discount_value,valid_from,valid_to,stackable,admin_note
+PROMO-001,STORE-SH-001,午餐满减,order_amount,50.0,fixed_amount,8.0,2026-07-01,2026-07-31,false,仅午餐时段
+PROMO-002,STORE-SH-001,新客券,customer_segment,0.0,fixed_amount,15.0,2026-07-01,2026-08-31,false,需业务服务判断新客
+PROMO-003,STORE-HZ-002,双人套餐折扣,sku_bundle,88.0,percentage,0.10,2026-07-10,2026-08-10,true,仅限指定套餐
