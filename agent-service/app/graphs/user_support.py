@@ -26,6 +26,7 @@ from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from langgraph.graph import END, MessagesState, StateGraph
 from langgraph.prebuilt import ToolNode
 from langgraph.types import Command, interrupt
+from langchain_core.utils.function_calling import convert_to_openai_tool
 
 from app.clients.spring_internal import SpringInternalApiClient
 from app.confirmations import ConfirmationError, ConfirmationService, ConfirmationStore
@@ -110,6 +111,7 @@ class UserSupportAgentGraph:
                 trace_id=trace_id,
                 actor_type=request.actor.type,
                 error_type=type(exc).__name__,
+                error=str(exc)[:500],
             )
             return self._unavailable_response(request, session_id, trace_id)
 
@@ -131,8 +133,10 @@ class UserSupportAgentGraph:
             return
 
         seen_tools: set[str] = set()
+        tool_messages: list[BaseMessage] = []
         knowledge_miss = False
         waiting_confirmation = False
+        emitted_text = False
         try:
             await self._ensure_checkpointer()
             graph = self._compile_for_request(request, session_id)
@@ -159,6 +163,7 @@ class UserSupportAgentGraph:
                 if isinstance(message, AIMessageChunk):
                     text = self._content_text(message.content)
                     if text and not knowledge_miss:
+                        emitted_text = True
                         yield "delta", {"text": text}
                     for tool_call in message.tool_call_chunks:
                         tool_name = tool_call.get("name")
@@ -167,6 +172,7 @@ class UserSupportAgentGraph:
                             yield "tool_started", {"tool": tool_name}
                             yield "tool_status", {"tool": tool_name, "status": "running"}
                 elif isinstance(message, ToolMessage) and message.name:
+                    tool_messages.append(message)
                     if message.name not in seen_tools:
                         seen_tools.add(message.name)
                         yield "tool_started", {"tool": message.name}
@@ -185,11 +191,17 @@ class UserSupportAgentGraph:
                     confirmation = self._tool_payload(message.content).get("confirmation")
                     if isinstance(confirmation, dict):
                         waiting_confirmation = True
+                        if not emitted_text:
+                            emitted_text = True
+                            yield "delta", {"text": self._confirmation_text(confirmation)}
                         yield "confirmation", confirmation
                         yield "interrupt", {"kind": "confirmation", "request": confirmation}
 
             if knowledge_miss and not waiting_confirmation:
+                emitted_text = True
                 yield "delta", {"text": NO_EVIDENCE_MESSAGE}
+            elif not waiting_confirmation and not emitted_text and tool_messages:
+                yield "delta", {"text": self._grounded_tool_fallback(tool_messages)}
             yield "node_started", {"node": "compose_user_answer"}
             yield "done", {
                 "session_id": session_id,
@@ -203,6 +215,7 @@ class UserSupportAgentGraph:
                 trace_id=trace_id,
                 actor_type=request.actor.type,
                 error_type=type(exc).__name__,
+                error=str(exc)[:500],
             )
             yield "error", {"code": "AGENT_UNAVAILABLE", "message": "智能助手暂时不可用"}
 
@@ -213,9 +226,68 @@ class UserSupportAgentGraph:
             request_id=request.request_id, actor=request.actor, session_id=session_id
         )
 
+    def model_tool_schemas(self, tools: list[object]) -> list[dict[str, object]]:
+        schemas: list[dict[str, object]] = []
+        for tool in tools:
+            schema = self._simplify_tool_schema(convert_to_openai_tool(tool))
+            if isinstance(schema, dict):
+                schemas.append(schema)
+        return schemas
+
+    def _simplify_tool_schema(self, schema: object) -> object:
+        if isinstance(schema, list):
+            return [self._simplify_tool_schema(item) for item in schema]
+        if not isinstance(schema, dict):
+            return schema
+
+        any_of = schema.get("anyOf")
+        if isinstance(any_of, list):
+            options = [
+                item
+                for item in any_of
+                if not (isinstance(item, dict) and item.get("type") == "null")
+            ]
+            if options:
+                selected = next(
+                    (
+                        item
+                        for item in options
+                        if isinstance(item, dict) and item.get("type") in {"number", "integer"}
+                    ),
+                    options[0],
+                )
+                if isinstance(selected, dict):
+                    merged = {
+                        key: value
+                        for key, value in schema.items()
+                        if key not in {"anyOf", "default"}
+                    }
+                    merged.update(selected)
+                    return self._simplify_tool_schema(merged)
+
+        unsupported = {
+            "default",
+            "format",
+            "pattern",
+            "minimum",
+            "maximum",
+            "exclusiveMinimum",
+            "exclusiveMaximum",
+            "minLength",
+            "maxLength",
+            "minItems",
+            "maxItems",
+        }
+        return {
+            key: self._simplify_tool_schema(value)
+            for key, value in schema.items()
+            if key not in unsupported
+        }
+
     def _compile_for_request(self, request: ChatRequest, session_id: str):
         tools = self.langchain_tools_for_request(request, session_id)
-        model_with_tools = self.model.bind_tools(tools)
+        model_with_tools = self.model.bind_tools(self.model_tool_schemas(tools))
+
         async def validate_user_context(_: UserAgentState) -> dict[str, str]:
             if request.actor.type != "user":
                 raise PermissionError("User actor required")
@@ -229,7 +301,7 @@ class UserSupportAgentGraph:
 
         async def call_model(state: UserAgentState) -> dict[str, list[BaseMessage]]:
             response = await model_with_tools.ainvoke(
-                [SystemMessage(content=USER_AGENT_SYSTEM_PROMPT), *state["messages"]]
+                self._model_messages(USER_AGENT_SYSTEM_PROMPT, state["messages"])
             )
             return {"messages": [response]}
 
@@ -248,16 +320,12 @@ class UserSupportAgentGraph:
             state: UserAgentState,
         ) -> dict[str, list[BaseMessage]]:
             response = await self.model.ainvoke(
-                [
-                    SystemMessage(
-                        content=(
-                            USER_AGENT_SYSTEM_PROMPT
-                            + "\n你已经获得足够的工具结果。禁止再次调用任何工具；"
-                            "必须仅依据现有 ToolMessage 直接给出最终答案。"
-                        )
-                    ),
-                    *state["messages"],
-                ]
+                self._model_messages(
+                    USER_AGENT_SYSTEM_PROMPT
+                    + "\n你已经获得足够的工具结果。禁止再次调用任何工具；"
+                    "必须仅依据现有 ToolMessage 直接给出最终答案。",
+                    state["messages"],
+                )
             )
             text = self._content_text(response.content)
             if not text:
@@ -302,7 +370,7 @@ class UserSupportAgentGraph:
         workflow.add_node("finalize_from_tools", finalize_from_tools)
         workflow.add_node(
             "tools",
-            ToolNode(tools, handle_tool_errors="业务查询暂时不可用，请稍后再试。"),
+            ToolNode(tools, handle_tool_errors=self._tool_error_payload),
         )
         workflow.add_node("check_user_result", check_user_result)
         workflow.add_node("compose_user_answer", compose_user_answer)
@@ -328,6 +396,10 @@ class UserSupportAgentGraph:
         )
         workflow.add_edge("compose_user_answer", END)
         return workflow.compile(checkpointer=self.checkpointer)
+
+    def _model_messages(self, prompt: str, messages: list[BaseMessage]) -> list[BaseMessage]:
+        history = [message for message in messages if not isinstance(message, SystemMessage)]
+        return [SystemMessage(content=prompt), *history]
 
     async def _ensure_checkpointer(self) -> None:
         if self._checkpointer_ready or (
@@ -370,6 +442,9 @@ class UserSupportAgentGraph:
                 content = self._content_text(message.content)
                 if content:
                     return content
+        fallback = self._grounded_tool_fallback(messages)
+        if fallback:
+            return fallback
         return "暂时无法生成可靠回答，请稍后再试。"
 
     def _extract_citations(self, messages: list[BaseMessage]) -> list[SourceCitation]:
@@ -405,6 +480,13 @@ class UserSupportAgentGraph:
                 if isinstance(confirmation, dict):
                     return confirmation
         return None
+
+    def _confirmation_text(self, confirmation: dict[str, object]) -> str:
+        summary = confirmation.get("summary")
+        if isinstance(summary, str) and summary.strip():
+            return summary.strip()
+        action = confirmation.get("action")
+        return f"请确认是否执行操作：{action}。" if action else "请确认是否执行该操作。"
 
     async def _execute_confirmation(
         self, request: ChatRequest, session_id: str, trace_id: str
@@ -451,6 +533,7 @@ class UserSupportAgentGraph:
                 trace_id=trace_id,
                 actor_type=request.actor.type,
                 error_type=type(exc).__name__,
+                error=str(exc)[:500],
             )
             return self._unavailable_response(request, session_id, trace_id)
 
@@ -475,6 +558,7 @@ class UserSupportAgentGraph:
                 request_id=request.request_id,
                 actor_type=request.actor.type,
                 error_type=type(exc).__name__,
+                error=str(exc)[:500],
             )
 
     def _tool_payload(self, content: object) -> dict[str, object]:
@@ -514,20 +598,112 @@ class UserSupportAgentGraph:
             if not isinstance(message, ToolMessage):
                 continue
             payload = self._tool_payload(message.content)
+            error_text = self._tool_error_text(payload)
+            if error_text:
+                return error_text
             items = payload.get("items")
             if isinstance(items, list) and items:
+                category_lines = self._category_summary_lines(items)
+                if category_lines:
+                    recommendation = self._category_recommendation(items)
+                    suffix = f"。建议使用：{recommendation}。" if recommendation else "。"
+                    return "查询到可用菜品分类：" + "、".join(category_lines) + suffix
                 lines: list[str] = []
                 for item in items[:5]:
                     if not isinstance(item, dict):
                         continue
-                    name = str(item.get("name") or item.get("title") or "未命名项目")
-                    price = item.get("price", item.get("amount"))
-                    lines.append(f"{name}（{price} 元）" if price is not None else name)
+                    lines.append(self._catalog_item_summary_line(item))
                 if lines:
                     return "查询到以下结果：" + "、".join(lines) + "。"
+            summary = self._payload_summary_lines(payload)
+            if summary:
+                return "查询到以下结果：" + "、".join(summary) + "。"
             if payload.get("status") is not None:
                 return f"门店当前状态为 {payload['status']}。"
         return "查询已完成，但暂时无法整理结果，请稍后再试。"
+
+    def _tool_error_payload(self, exc: Exception) -> str:
+        code = getattr(exc, "code", type(exc).__name__)
+        message = str(exc) or "工具调用失败"
+        request_id = getattr(exc, "request_id", None)
+        logger.warning(
+            "agent_tool_failed",
+            error_type=type(exc).__name__,
+            error_code=code,
+            error=message[:500],
+            upstream_request_id=request_id,
+        )
+        return json.dumps(
+            {
+                "ok": False,
+                "error_code": code,
+                "message": message,
+                "request_id": request_id,
+            },
+            ensure_ascii=False,
+        )
+
+    def _tool_error_text(self, payload: dict[str, object]) -> str:
+        if payload.get("ok") is not False and not payload.get("error_code"):
+            return ""
+        code = payload.get("error_code") or "TOOL_ERROR"
+        message = payload.get("message") or "工具调用失败"
+        if code == "UPSTREAM_ERROR" and "temporarily unavailable" in str(message):
+            message = "Spring 内部服务暂时不可用，请检查后端是否已启动、端口配置是否正确"
+        return f"工具调用失败：{message}（{code}）。"
+
+    def _category_summary_lines(self, items: list[object]) -> list[str]:
+        lines: list[str] = []
+        for item in items[:8]:
+            if not isinstance(item, dict):
+                return []
+            if not {"id", "name", "type", "status"}.issubset(item):
+                return []
+            lines.append(f"{item['name']}（ID {item['id']}）")
+        return lines
+
+    def _category_recommendation(self, items: list[object]) -> str | None:
+        for item in items:
+            if isinstance(item, dict) and item.get("name") == "汤类":
+                return f"{item['name']}（ID {item['id']}）"
+        return None
+
+    def _catalog_item_summary_line(self, item: dict[str, object]) -> str:
+        name = str(item.get("name") or item.get("title") or "未命名项目")
+        price = item.get("price", item.get("amount"))
+        item_id = item.get("id")
+        category_name = item.get("category_name")
+        if isinstance(category_name, str) and category_name.strip():
+            if price is not None:
+                return f"{name} 属于 {category_name}，价格 {price} 元"
+            return f"{name} 属于 {category_name}"
+        if price is not None:
+            return f"{name}（{price} 元）"
+        if item_id is not None:
+            return f"{name}（ID {item_id}）"
+        return name
+
+    def _payload_summary_lines(self, payload: dict[str, object]) -> list[str]:
+        ignored = {
+            "answer_guidance",
+            "available",
+            "citations",
+            "confirmation",
+            "found",
+            "generated_at",
+            "scope",
+            "source",
+            "status",
+            "total",
+        }
+        lines: list[str] = []
+        for key, value in payload.items():
+            if key in ignored or value is None or isinstance(value, (dict, list)):
+                continue
+            lines.append(f"{key}={value}")
+            if len(lines) >= 5:
+                break
+        return lines
 
     def _knowledge_miss(self, messages: list[BaseMessage]) -> bool:
         found: bool | None = None

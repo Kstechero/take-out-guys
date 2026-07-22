@@ -44,8 +44,29 @@ Use the system Python directly. Python 3.11 or newer is required.
 
 ```powershell
 cd agent-service
+.\start.ps1
+```
+
+On Windows, you can also use:
+
+```powershell
+cd agent-service
+.\start.bat
+```
+
+The launcher starts `agent-service` at `http://127.0.0.1:8000` by default.
+Override the address only when needed:
+
+```powershell
+cd agent-service
+.\start.ps1 -HostName 0.0.0.0 -Port 8001
+```
+
+Install dependencies before the first run, or after dependencies change:
+
+```powershell
+cd agent-service
 python -m pip install -e ".[dev]"
-python -m uvicorn app.main:app --reload
 ```
 
 Health check:
