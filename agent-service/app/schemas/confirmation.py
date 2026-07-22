@@ -57,6 +57,13 @@ class CreateAdminDishInput(BaseModel):
     audit_reason: str = Field(min_length=5, max_length=200)
 
 
+class CreateAdminCategoryInput(BaseModel):
+    name: str = Field(min_length=1, max_length=64)
+    type: Literal[1, 2]
+    sort: int = Field(default=0, ge=0, le=9999)
+    audit_reason: str = Field(min_length=5, max_length=200)
+
+
 class UpdateAdminDishInput(BaseModel):
     dish_id: int = Field(gt=0)
     name: str | None = Field(default=None, min_length=1, max_length=64)

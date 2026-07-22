@@ -10,8 +10,11 @@ from app.schemas.admin_tools import (
     AdminCategoryItem,
     AdminCategorySearchResult,
     AdminCatalogItem,
+    AdminCatalogSearchInput,
     AdminCatalogSearchResult,
+    AdminCouponSearchInput,
     AdminOrderSearchInput,
+    AdminReviewSearchInput,
 )
 from app.schemas.chat import ActorContext
 from app.tools.admin_queries import AdminQueryTools
@@ -69,6 +72,81 @@ def test_admin_order_search_requires_bounded_filter() -> None:
         AdminOrderSearchInput()
 
 
+def test_admin_read_tool_limits_are_clamped_to_contract_maximum() -> None:
+    assert AdminCatalogSearchInput(query="传统主食", status=1, limit=50).limit == 20
+    assert AdminCouponSearchInput(query="夏日", limit=50).limit == 20
+    assert AdminReviewSearchInput(keyword="差评", limit=50).limit == 20
+    assert AdminOrderSearchInput(status=2, limit=50).limit == 20
+
+
+async def test_admin_catalog_tool_clamps_oversized_model_limit() -> None:
+    class FakeAdminQueryClient:
+        def __init__(self) -> None:
+            self.params: dict[str, Any] | None = None
+
+        async def admin_catalog_search(self, **kwargs: Any) -> AdminCatalogSearchResult:
+            self.params = kwargs["params"]
+            return AdminCatalogSearchResult(
+                items=[],
+                total=0,
+                generated_at="2026-07-22T12:00:01",
+                scope="single_store",
+                source="spring_internal_api",
+            )
+
+    client = FakeAdminQueryClient()
+    tool = next(
+        item
+        for item in AdminQueryTools(client=client).as_langchain_tools(
+            request_id="req-admin-query",
+            actor=ActorContext(type="admin", id="7", roles=["ADMIN"]),
+        )
+        if item.name == "admin_menu_search"
+    )
+
+    result = await tool.ainvoke({"query": "米饭", "status": 1, "category_id": 12, "limit": 50})
+
+    assert result["total"] == 0
+    assert client.params == {
+        "name": "米饭",
+        "status": 1,
+        "category_id": 12,
+        "page": 1,
+        "limit": 20,
+    }
+
+
+async def test_admin_category_tool_uses_management_page_params() -> None:
+    class FakeAdminQueryClient:
+        def __init__(self) -> None:
+            self.params: dict[str, Any] | None = None
+
+        async def admin_category_search(self, **kwargs: Any) -> AdminCategorySearchResult:
+            self.params = kwargs["params"]
+            return AdminCategorySearchResult(
+                items=[],
+                total=0,
+                generated_at="2026-07-22T12:00:01",
+                scope="single_store",
+                source="spring_internal_api",
+            )
+
+    client = FakeAdminQueryClient()
+    tool = next(
+        item
+        for item in AdminQueryTools(client=client).as_langchain_tools(
+            request_id="req-admin-query",
+            actor=ActorContext(type="admin", id="7", roles=["ADMIN"]),
+        )
+        if item.name == "admin_category_search"
+    )
+
+    result = await tool.ainvoke({"query": "staple", "type": 1, "status": 1, "limit": 50})
+
+    assert result["total"] == 0
+    assert client.params == {"name": "staple", "type": 1, "page": 1, "limit": 20}
+
+
 class FakeAdminMutationClient:
     def __init__(self) -> None:
         self.calls: list[dict[str, Any]] = []
@@ -117,6 +195,10 @@ class FakeAdminMutationClient:
     async def update_admin_dish(self, **kwargs: Any) -> dict[str, Any]:
         self.calls.append({"method": "update_admin_dish", **kwargs})
         return {"status": "APPLIED", "dish_id": 46}
+
+    async def create_admin_category(self, **kwargs: Any) -> dict[str, Any]:
+        self.calls.append({"method": "create_admin_category", **kwargs})
+        return {"status": "APPLIED", "category_name": kwargs["payload"]["name"]}
 
     async def create_admin_coupon(self, **kwargs: Any) -> dict[str, Any]:
         self.calls.append({"method": "create_admin_coupon", **kwargs})
@@ -233,6 +315,46 @@ async def test_admin_update_dish_binds_reviewed_version() -> None:
     assert client.calls[-1]["method"] == "update_admin_dish"
     assert client.calls[-1]["payload"]["expected_updated_at"] == "2026-07-22T12:00:00"
     assert client.calls[-1]["payload"]["price"] == "7.00"
+
+
+async def test_admin_create_category_executes_confirmed_payload() -> None:
+    client = FakeAdminMutationClient()
+    confirmations = ConfirmationService(
+        store=ConfirmationStore(":memory:"),
+        client=client,  # type: ignore[arg-type]
+    )
+    tool = next(
+        item
+        for item in AdminMutationTools(
+            client=client,  # type: ignore[arg-type]
+            confirmations=confirmations,
+        ).as_langchain_tools(
+            request_id="req-admin-create-category",
+            actor=ActorContext(type="admin", id="7", roles=["ADMIN"]),
+            session_id="admin-session",
+        )
+        if item.name == "create_admin_category"
+    )
+
+    proposal = await tool.ainvoke(
+        {
+            "name": "Agent test category",
+            "type": 1,
+            "sort": 80,
+            "audit_reason": "admin category creation test",
+        }
+    )
+    confirmation = proposal["confirmation"]
+    assert confirmation["action"] == "create_admin_category"
+
+    await confirmations.execute_admin_action(
+        confirmation["token"],
+        request_id="req-admin-create-category-execute",
+        actor=ActorContext(type="admin", id="7", roles=["ADMIN"]),
+        session_id="admin-session",
+    )
+    assert client.calls[-1]["method"] == "create_admin_category"
+    assert client.calls[-1]["payload"]["sort"] == 80
 
 
 async def test_admin_create_coupon_executes_confirmed_payload() -> None:

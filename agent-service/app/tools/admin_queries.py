@@ -52,40 +52,80 @@ class AdminQueryTools:
             return result.model_dump(mode="json")
 
         async def admin_menu_search(
-            query: str | None = None, status: int | None = None, limit: int = 10
+            name: str | None = None,
+            query: str | None = None,
+            status: int | None = None,
+            category_id: int | None = None,
+            page: int = 1,
+            limit: int = 10,
         ) -> dict[str, Any]:
-            args = AdminCatalogSearchInput(query=query, status=status, limit=limit)
+            args = AdminCatalogSearchInput(
+                name=name,
+                query=query,
+                status=status,
+                category_id=category_id,
+                page=page,
+                limit=limit,
+            )
+            params = args.model_dump(exclude_none=True)
+            params.pop("query", None)
             result = await self.client.admin_catalog_search(
                 request_id=request_id,
                 actor=actor,
                 resource="menu",
-                params=args.model_dump(exclude_none=True),
+                params=params,
             )
             return result.model_dump(mode="json")
 
         async def admin_set_meal_search(
-            query: str | None = None, status: int | None = None, limit: int = 10
+            name: str | None = None,
+            query: str | None = None,
+            status: int | None = None,
+            category_id: int | None = None,
+            page: int = 1,
+            limit: int = 10,
         ) -> dict[str, Any]:
-            args = AdminCatalogSearchInput(query=query, status=status, limit=limit)
+            args = AdminCatalogSearchInput(
+                name=name,
+                query=query,
+                status=status,
+                category_id=category_id,
+                page=page,
+                limit=limit,
+            )
+            params = args.model_dump(exclude_none=True)
+            params.pop("query", None)
             result = await self.client.admin_catalog_search(
                 request_id=request_id,
                 actor=actor,
                 resource="setmeals",
-                params=args.model_dump(exclude_none=True),
+                params=params,
             )
             return result.model_dump(mode="json")
 
         async def admin_category_search(
+            name: str | None = None,
             query: str | None = None,
             type: int | None = 1,
             status: int | None = 1,
+            page: int = 1,
             limit: int = 20,
         ) -> dict[str, Any]:
-            args = AdminCategorySearchInput(query=query, type=type, status=status, limit=limit)
+            args = AdminCategorySearchInput(
+                name=name,
+                query=query,
+                type=type,
+                status=status,
+                page=page,
+                limit=limit,
+            )
+            params = args.model_dump(exclude_none=True)
+            params.pop("query", None)
+            params.pop("status", None)
             result = await self.client.admin_category_search(
                 request_id=request_id,
                 actor=actor,
-                params=args.model_dump(exclude_none=True),
+                params=params,
             )
             return result.model_dump(mode="json")
 
@@ -127,25 +167,34 @@ class AdminQueryTools:
             (
                 admin_menu_search,
                 "admin_menu_search",
-                "查询管理端菜品目录、价格、分类名称和上下架状态。",
+                (
+                    "按管理端菜品分页查询口径查询菜品目录；支持 name、category_id、"
+                    "status、page、limit，total 为符合条件的总数。"
+                ),
                 AdminCatalogSearchInput,
             ),
             (
                 admin_set_meal_search,
                 "admin_set_meal_search",
-                "查询管理端套餐目录、价格和上下架状态。",
+                (
+                    "按管理端套餐分页查询口径查询套餐目录；支持 name、category_id、"
+                    "status、page、limit，total 为符合条件的总数。"
+                ),
                 AdminCatalogSearchInput,
             ),
             (
                 admin_category_search,
                 "admin_category_search",
-                "查询真实分类列表；新增菜品前必须用它选择存在且启用的菜品分类ID。type=1 表示菜品分类，type=2 表示套餐分类。",
+                (
+                    "按管理端分类分页查询口径查询真实分类；支持 name、type、page、limit。"
+                    "新增或按分类查询菜品前先用它获取分类 ID。type=1 表示菜品分类，type=2 表示套餐分类。"
+                ),
                 AdminCategorySearchInput,
             ),
             (
                 admin_coupon_search,
                 "admin_coupon_search",
-                "查询优惠券配置、余量和有效期。",
+                "查询优惠券配置、余量、状态和有效期。",
                 AdminCouponSearchInput,
             ),
             (

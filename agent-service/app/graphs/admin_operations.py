@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from uuid import uuid4
 
 import structlog
 from langchain_core.messages import AIMessage, BaseMessage, SystemMessage
@@ -29,6 +30,11 @@ from app.tools.shop_status import ShopStatusTool
 
 logger = structlog.get_logger(__name__)
 
+ADMIN_OUT_OF_SCOPE_MESSAGE = (
+    "我只能协助处理外卖平台管理端运营相关问题，例如订单、菜品、分类、套餐、优惠券、"
+    "评价、门店状态和经营数据。这个问题不属于当前管理端 Agent 的处理范围。"
+)
+
 
 class AdminAgentState(MessagesState):
     admin_scope: dict[str, str]
@@ -39,13 +45,112 @@ class AdminAgentState(MessagesState):
 class AdminOperationsAgentGraph(UserSupportAgentGraph):
     tools: AdminToolRegistry
 
+    async def run(self, request: ChatRequest) -> ChatResponse:
+        trace_id = str(uuid4())
+        session_id = request.session_id or self._build_session_id(request.actor.id)
+        if not request.confirmed_action_token and not self._is_admin_domain_message(request.message):
+            return ChatResponse(
+                request_id=request.request_id,
+                session_id=session_id,
+                answer=ADMIN_OUT_OF_SCOPE_MESSAGE,
+                trace_id=trace_id,
+            )
+        return await super().run(request)
+
+    async def stream(self, request: ChatRequest):
+        trace_id = str(uuid4())
+        session_id = request.session_id or self._build_session_id(request.actor.id)
+        if not request.confirmed_action_token and not self._is_admin_domain_message(request.message):
+            yield "run_started", {"thread_id": session_id, "trace_id": trace_id}
+            yield "delta", {"text": ADMIN_OUT_OF_SCOPE_MESSAGE}
+            yield "done", {
+                "session_id": session_id,
+                "trace_id": trace_id,
+                "status": "completed",
+            }
+            return
+        async for event in super().stream(request):
+            yield event
+
+    def _is_admin_domain_message(self, message: str) -> bool:
+        text = message.strip().lower()
+        if not text:
+            return False
+        blocked_keywords = {
+            "冒泡排序",
+            "bubble sort",
+            "排序算法",
+            "python",
+            "java",
+            "javascript",
+            "算法",
+            "编程",
+            "代码实现",
+            "翻译",
+            "作文",
+            "诗",
+            "笑话",
+        }
+        if any(keyword in text for keyword in blocked_keywords):
+            return False
+        allowed_keywords = {
+            "订单",
+            "菜品",
+            "菜",
+            "菜单",
+            "分类",
+            "主食",
+            "套餐",
+            "优惠券",
+            "券",
+            "评价",
+            "评论",
+            "门店",
+            "营业",
+            "打烊",
+            "经营",
+            "营业额",
+            "销售",
+            "销量",
+            "退款",
+            "取消",
+            "配送",
+            "客服",
+            "风险",
+            "敏感词",
+            "新增",
+            "修改",
+            "上架",
+            "下架",
+            "启用",
+            "停用",
+            "价格",
+            "库存",
+            "agent",
+            "工具",
+            "tool",
+            "schema",
+            "查询",
+            "数据",
+            "管理端",
+            "后台",
+            "运营",
+            "需要",
+            "确认",
+            "同意",
+            "继续",
+            "可以",
+            "执行",
+        }
+        return any(keyword in text for keyword in allowed_keywords)
+
     def _compile_for_request(self, request: ChatRequest, session_id: str):
         tools = self.langchain_tools_for_request(request, session_id)
-        model_with_tools = self.model.bind_tools(tools)
+        model_with_tools = self.model.bind_tools(self.model_tool_schemas(tools))
 
         async def call_admin_model(state: AdminAgentState) -> dict[str, list[BaseMessage]]:
             response = await model_with_tools.ainvoke(
-                [SystemMessage(content=ADMIN_AGENT_SYSTEM_PROMPT), *state["messages"]]
+                self._model_messages(ADMIN_AGENT_SYSTEM_PROMPT, state["messages"])
             )
             return {"messages": [response]}
 
@@ -64,16 +169,12 @@ class AdminOperationsAgentGraph(UserSupportAgentGraph):
             state: AdminAgentState,
         ) -> dict[str, list[BaseMessage]]:
             response = await self.model.ainvoke(
-                [
-                    SystemMessage(
-                        content=(
-                            ADMIN_AGENT_SYSTEM_PROMPT
-                            + "\n你已经获得足够的运营工具结果。禁止再次调用任何工具；"
-                            "必须仅依据现有 ToolMessage 直接给出最终答案。"
-                        )
-                    ),
-                    *state["messages"],
-                ]
+                self._model_messages(
+                    ADMIN_AGENT_SYSTEM_PROMPT
+                    + "\n你已经获得足够的运营工具结果。禁止再次调用任何工具；"
+                    "必须仅依据现有 ToolMessage 直接给出最终答案。",
+                    state["messages"],
+                )
             )
             text = self._content_text(response.content)
             if not text:
@@ -109,7 +210,7 @@ class AdminOperationsAgentGraph(UserSupportAgentGraph):
         workflow.add_node("finalize_from_tools", finalize_from_tools)
         workflow.add_node(
             "admin_tools",
-            ToolNode(tools, handle_tool_errors="运营查询暂时不可用，请稍后再试。"),
+            ToolNode(tools, handle_tool_errors=self._tool_error_payload),
         )
         workflow.add_node("check_admin_result", check_admin_result)
         workflow.add_node("admin_done", admin_done)
@@ -181,6 +282,7 @@ class AdminOperationsAgentGraph(UserSupportAgentGraph):
                 trace_id=trace_id,
                 actor_type=request.actor.type,
                 error_type=type(exc).__name__,
+                error=str(exc)[:500],
             )
             return self._unavailable_response(request, session_id, trace_id)
 

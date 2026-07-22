@@ -9,6 +9,7 @@ from app.clients.spring_internal import SpringInternalApiClient
 from app.confirmations import ConfirmationService
 from app.schemas.chat import ActorContext
 from app.schemas.confirmation import (
+    CreateAdminCategoryInput,
     CreateAdminCouponInput,
     CreateAdminDishInput,
     ManageCouponInput,
@@ -157,6 +158,54 @@ class AdminMutationTools:
                 },
             )
 
+        async def create_admin_category(
+            name: str,
+            type: int,
+            sort: int = 0,
+            audit_reason: str = "",
+        ) -> dict[str, object]:
+            args = CreateAdminCategoryInput(
+                name=name,
+                type=type,
+                sort=sort,
+                audit_reason=audit_reason,
+            )
+            existing = await self.client.admin_category_search(
+                request_id=request_id,
+                actor=actor,
+                params={"name": args.name, "type": args.type, "page": 1, "limit": 20},
+            )
+            duplicate = next(
+                (
+                    item
+                    for item in existing.items
+                    if item.name == args.name and item.type == args.type
+                ),
+                None,
+            )
+            if duplicate is not None:
+                raise ValueError("category with the same name and type already exists")
+            category_type = "菜品分类" if args.type == 1 else "套餐分类"
+            return self.confirmations.propose_admin_action(
+                actor=actor,
+                session_id=session_id,
+                action="create_admin_category",
+                arguments=args.model_dump(mode="json"),
+                summary=f"确认新增{category_type}“{args.name}”，排序 {args.sort} 吗？",
+                details={
+                    "resource": "category",
+                    "new_value": {
+                        "name": args.name,
+                        "type": args.type,
+                        "sort": args.sort,
+                        "initial_status": 0,
+                    },
+                    "impact_count": 1,
+                    "risk": "high",
+                    "audit_reason": args.audit_reason,
+                },
+            )
+
         async def update_admin_dish(
             dish_id: int,
             name: str | None = None,
@@ -281,6 +330,16 @@ class AdminMutationTools:
                     "可选图片、描述、状态 status 和口味 flavors。"
                 ),
                 args_schema=CreateAdminDishInput,
+            ),
+            StructuredTool.from_function(
+                coroutine=create_admin_category,
+                name="create_admin_category",
+                description=(
+                    "提出新增管理端分类并生成高风险确认卡；不会立即执行。"
+                    "必须提供分类名称 name、分类类型 type（1=菜品分类，2=套餐分类）、排序 sort 和 audit_reason。"
+                    "执行后沿用管理端 CategoryService.save，初始状态为停用。"
+                ),
+                args_schema=CreateAdminCategoryInput,
             ),
             StructuredTool.from_function(
                 coroutine=update_admin_dish,

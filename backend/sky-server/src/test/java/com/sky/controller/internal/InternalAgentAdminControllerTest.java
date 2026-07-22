@@ -1,12 +1,18 @@
 package com.sky.controller.internal;
 
 import com.sky.context.BaseContext;
+import com.sky.dto.CategoryDTO;
+import com.sky.dto.CategoryPageQueryDTO;
+import com.sky.dto.InternalAgentAdminCategoryCreateDTO;
 import com.sky.dto.InternalAgentAdminCouponActionDTO;
 import com.sky.dto.InternalAgentAdminCouponCreateDTO;
 import com.sky.dto.InternalAgentAdminDishMutationDTO;
 import com.sky.dto.InternalAgentAdminOrderActionDTO;
 import com.sky.dto.InternalAgentAdminShopStatusDTO;
 import com.sky.entity.Category;
+import com.sky.dto.DishPageQueryDTO;
+import com.sky.result.PageResult;
+import com.sky.vo.DishVO;
 import com.sky.properties.AgentServiceProperties;
 import com.sky.service.CategoryService;
 import com.sky.service.CouponService;
@@ -29,12 +35,14 @@ import org.springframework.data.redis.core.ValueOperations;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
@@ -107,6 +115,44 @@ class InternalAgentAdminControllerTest {
                 SecurityException.class,
                 () -> controller.orderDetail("req-user", "user", "USER", 10L)
         );
+    }
+
+    @Test
+    void menuSearchFiltersByCategoryIdAndKeepsMatchedTotal() {
+        when(dishService.pageQuery(any())).thenReturn(new PageResult(3, Arrays.asList(
+                dish(49L, "Rice", 12L),
+                dish(50L, "Noodles", 12L)
+        )));
+
+        Map<String, Object> response = controller.menu(
+                "req-menu", "admin", "ADMIN", null, null, 1, 12L, 1, 2);
+        Map<?, ?> data = (Map<?, ?>) response.get("data");
+
+        assertEquals(3, data.get("total"));
+        assertEquals(2, ((java.util.List<?>) data.get("items")).size());
+        org.mockito.ArgumentCaptor<DishPageQueryDTO> captor = forClass(DishPageQueryDTO.class);
+        verify(dishService).pageQuery(captor.capture());
+        assertEquals(12, captor.getValue().getCategoryId());
+        assertEquals(2, captor.getValue().getPageSize());
+    }
+
+    @Test
+    void categorySearchUsesManagementPageQuery() {
+        when(categoryService.pageQuery(any())).thenReturn(new PageResult(1, Collections.singletonList(
+                category(12L, 1)
+        )));
+
+        Map<String, Object> response = controller.categories(
+                "req-category", "admin", "ADMIN", "Traditional", null, 1, null, 2, 20);
+        Map<?, ?> data = (Map<?, ?>) response.get("data");
+
+        assertEquals(1, data.get("total"));
+        org.mockito.ArgumentCaptor<CategoryPageQueryDTO> captor = forClass(CategoryPageQueryDTO.class);
+        verify(categoryService).pageQuery(captor.capture());
+        assertEquals("Traditional", captor.getValue().getName());
+        assertEquals(1, captor.getValue().getType());
+        assertEquals(2, captor.getValue().getPage());
+        assertEquals(20, captor.getValue().getPageSize());
     }
 
     @Test
@@ -232,6 +278,27 @@ class InternalAgentAdminControllerTest {
     }
 
     @Test
+    void confirmedCategoryCreationCallsBusinessService() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.setIfAbsent(any(), any(), anyLong(), any())).thenReturn(true);
+        InternalAgentAdminCategoryCreateDTO body = new InternalAgentAdminCategoryCreateDTO();
+        body.setName("Agent test category");
+        body.setType(1);
+        body.setSort(50);
+        body.setAuditReason("Agent test category create audit reason");
+
+        controller.createCategory(
+                "req-create-category", "admin", "ADMIN", "confirmation-token-1234567890",
+                "idempotency-key-create-category", body);
+
+        org.mockito.ArgumentCaptor<CategoryDTO> captor = forClass(CategoryDTO.class);
+        verify(categoryService).save(captor.capture());
+        assertEquals("Agent test category", captor.getValue().getName());
+        assertEquals(1, captor.getValue().getType());
+        assertEquals(50, captor.getValue().getSort());
+    }
+
+    @Test
     void confirmedDishUpdatePassesReviewedVersion() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.setIfAbsent(any(), any(), anyLong(), any())).thenReturn(true);
@@ -277,6 +344,17 @@ class InternalAgentAdminControllerTest {
         category.setType(1);
         category.setName("Test category");
         category.setStatus(status);
+        category.setSort(10);
         return category;
+    }
+
+    private DishVO dish(Long id, String name, Long categoryId) {
+        DishVO dish = new DishVO();
+        dish.setId(id);
+        dish.setName(name);
+        dish.setCategoryId(categoryId);
+        dish.setPrice(new BigDecimal("2.00"));
+        dish.setStatus(1);
+        return dish;
     }
 }

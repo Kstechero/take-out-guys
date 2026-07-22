@@ -2,15 +2,20 @@ package com.sky.controller.internal;
 
 import com.sky.context.BaseContext;
 import com.sky.dto.AdminReviewPageQueryDTO;
+import com.sky.dto.CategoryDTO;
+import com.sky.dto.CategoryPageQueryDTO;
 import com.sky.dto.CouponPageQueryDTO;
 import com.sky.dto.CouponDTO;
 import com.sky.dto.DishDTO;
+import com.sky.dto.DishPageQueryDTO;
+import com.sky.dto.InternalAgentAdminCategoryCreateDTO;
 import com.sky.dto.InternalAgentAdminCouponActionDTO;
 import com.sky.dto.InternalAgentAdminCouponCreateDTO;
 import com.sky.dto.InternalAgentAdminDishMutationDTO;
 import com.sky.dto.InternalAgentAdminOrderActionDTO;
 import com.sky.dto.InternalAgentAdminShopStatusDTO;
 import com.sky.dto.OrdersPageQueryDTO;
+import com.sky.dto.SetmealPageQueryDTO;
 import com.sky.entity.Coupon;
 import com.sky.entity.Category;
 import com.sky.entity.Dish;
@@ -30,6 +35,7 @@ import com.sky.vo.BusinessDataVO;
 import com.sky.vo.DishVO;
 import com.sky.vo.OrderOverViewVO;
 import com.sky.vo.OrderVO;
+import com.sky.vo.SetmealVO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -178,26 +184,37 @@ public class InternalAgentAdminController {
             @RequestHeader("X-Request-Id") String requestId,
             @RequestHeader("X-Actor-Type") String actorType,
             @RequestHeader("X-Actor-Roles") String roles,
+            @RequestParam(required = false) String name,
             @RequestParam(required = false) String query,
             @RequestParam(required = false) Integer status,
+            @RequestParam(required = false, name = "category_id") Long categoryId,
+            @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer limit) {
         requireAdmin(actorType, roles);
-        Dish probe = new Dish();
-        probe.setStatus(status);
+        DishPageQueryDTO pageQuery = new DishPageQueryDTO();
+        pageQuery.setPage(safePage(page));
+        pageQuery.setPageSize(safeLimit(limit));
+        pageQuery.setName(StringUtils.hasText(name) ? name : query);
+        pageQuery.setStatus(status);
+        pageQuery.setCategoryId(categoryId == null ? null : categoryId.intValue());
+        PageResult pageResult = dishService.pageQuery(pageQuery);
         List<Map<String, Object>> items = new ArrayList<>();
-        for (DishVO dish : nullSafe(dishService.listWithFlavor(probe))) {
-            if (matchesResource(dish.getId(), dish.getName(), query)
-                    && items.size() < safeLimit(limit)) {
+        for (Object record : records(pageResult)) {
+            if (record instanceof DishVO) {
+                DishVO dish = (DishVO) record;
                 items.add(mapOf(
-                        "id", dish.getId(), "name", dish.getName(), "price", dish.getPrice(),
-                        "status", dish.getStatus(), "category_name", dish.getCategoryName(),
+                        "id", dish.getId(), "name", dish.getName(),
+                        "category_id", dish.getCategoryId(), "category_name", dish.getCategoryName(),
+                        "price", dish.getPrice(), "status", dish.getStatus(),
                         "description", dish.getDescription(), "updated_at",
                         dish.getUpdateTime() == null ? null : dish.getUpdateTime().toString()
                 ));
             }
         }
-        return catalogResult(items, requestId, "single_store,query=" + value(query)
-                + ",status=" + value(status));
+        return catalogResult(items, pageResult == null ? 0 : pageResult.getTotal(),
+                requestId, "single_store,name=" + value(pageQuery.getName())
+                        + ",status=" + value(status) + ",category_id=" + value(categoryId)
+                        + ",page=" + pageQuery.getPage() + ",page_size=" + pageQuery.getPageSize());
     }
 
     @GetMapping("/categories")
@@ -205,16 +222,23 @@ public class InternalAgentAdminController {
             @RequestHeader("X-Request-Id") String requestId,
             @RequestHeader("X-Actor-Type") String actorType,
             @RequestHeader("X-Actor-Roles") String roles,
+            @RequestParam(required = false) String name,
             @RequestParam(required = false) String query,
             @RequestParam(required = false) Integer type,
             @RequestParam(required = false) Integer status,
+            @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "20") Integer limit) {
         requireAdmin(actorType, roles);
+        CategoryPageQueryDTO pageQuery = new CategoryPageQueryDTO();
+        pageQuery.setPage(safePage(page));
+        pageQuery.setPageSize(safeLimit(limit));
+        pageQuery.setName(StringUtils.hasText(name) ? name : query);
+        pageQuery.setType(type);
+        PageResult pageResult = categoryService.pageQuery(pageQuery);
         List<Map<String, Object>> items = new ArrayList<>();
-        for (Category category : nullSafe(categoryService.list(type))) {
-            if ((status == null || status.equals(category.getStatus()))
-                    && matchesResource(category.getId(), category.getName(), query)
-                    && items.size() < safeLimit(limit)) {
+        for (Object record : records(pageResult)) {
+            if (record instanceof Category) {
+                Category category = (Category) record;
                 items.add(mapOf(
                         "id", category.getId(),
                         "name", category.getName(),
@@ -224,11 +248,45 @@ public class InternalAgentAdminController {
                 ));
             }
         }
-        return success(mapOf("items", items, "total", items.size(),
+        return success(mapOf("items", items, "total", pageResult == null ? 0 : pageResult.getTotal(),
                 "generated_at", LocalDateTime.now().toString(),
-                "scope", "single_store,query=" + value(query) + ",type=" + value(type)
-                        + ",status=" + value(status),
+                "scope", "single_store,name=" + value(pageQuery.getName())
+                        + ",type=" + value(type) + ",status_ignored=" + value(status)
+                        + ",page=" + pageQuery.getPage() + ",page_size=" + pageQuery.getPageSize(),
                 "source", "spring_internal_api"), requestId);
+    }
+
+    @PostMapping("/categories")
+    public Map<String, Object> createCategory(
+            @RequestHeader("X-Request-Id") String requestId,
+            @RequestHeader("X-Actor-Type") String actorType,
+            @RequestHeader("X-Actor-Roles") String roles,
+            @RequestHeader("X-Confirmation-Token") String confirmationToken,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @RequestBody InternalAgentAdminCategoryCreateDTO body) {
+        requireConfirmedWrite(actorType, roles, confirmationToken, idempotencyKey, body);
+        validateCategoryCreate(body);
+        requireAuditReason(body.getAuditReason());
+        String replay = beginIdempotentWrite(idempotencyKey);
+        if (replay != null) return replay(requestId, replay);
+        try {
+            CategoryDTO category = new CategoryDTO();
+            category.setName(body.getName().trim());
+            category.setType(body.getType());
+            category.setSort(body.getSort());
+            categoryService.save(category);
+            completeIdempotentWrite(idempotencyKey);
+            Map<String, Object> created = mapOf(
+                    "name", category.getName(), "type", category.getType(),
+                    "sort", category.getSort(), "initial_status", 0);
+            audit(requestId, "create_admin_category", category.getName(), null, created,
+                    body.getAuditReason());
+            return success(mapOf("status", "APPLIED", "category_name", category.getName(),
+                    "new_value", created), requestId);
+        } catch (RuntimeException ex) {
+            failIdempotentWrite(idempotencyKey);
+            throw ex;
+        }
     }
 
     @GetMapping("/setmeals")
@@ -236,26 +294,38 @@ public class InternalAgentAdminController {
             @RequestHeader("X-Request-Id") String requestId,
             @RequestHeader("X-Actor-Type") String actorType,
             @RequestHeader("X-Actor-Roles") String roles,
+            @RequestParam(required = false) String name,
             @RequestParam(required = false) String query,
             @RequestParam(required = false) Integer status,
+            @RequestParam(required = false, name = "category_id") Long categoryId,
+            @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer limit) {
         requireAdmin(actorType, roles);
-        Setmeal probe = new Setmeal();
-        probe.setStatus(status);
+        SetmealPageQueryDTO pageQuery = new SetmealPageQueryDTO();
+        pageQuery.setPage(safePage(page));
+        pageQuery.setPageSize(safeLimit(limit));
+        pageQuery.setName(StringUtils.hasText(name) ? name : query);
+        pageQuery.setStatus(status);
+        pageQuery.setCategoryId(categoryId == null ? null : categoryId.intValue());
+        PageResult pageResult = setmealService.pageQuery(pageQuery);
         List<Map<String, Object>> items = new ArrayList<>();
-        for (Setmeal setmeal : nullSafe(setmealService.list(probe))) {
-            if (matchesResource(setmeal.getId(), setmeal.getName(), query)
-                    && items.size() < safeLimit(limit)) {
+        for (Object record : records(pageResult)) {
+            if (record instanceof SetmealVO) {
+                SetmealVO setmeal = (SetmealVO) record;
                 items.add(mapOf(
-                        "id", setmeal.getId(), "name", setmeal.getName(), "price", setmeal.getPrice(),
-                        "status", setmeal.getStatus(), "description", setmeal.getDescription(),
+                        "id", setmeal.getId(), "name", setmeal.getName(),
+                        "category_id", setmeal.getCategoryId(), "category_name", setmeal.getCategoryName(),
+                        "price", setmeal.getPrice(), "status", setmeal.getStatus(),
+                        "description", setmeal.getDescription(),
                         "updated_at", setmeal.getUpdateTime() == null
                                 ? null : setmeal.getUpdateTime().toString()
                 ));
             }
         }
-        return catalogResult(items, requestId, "single_store,query=" + value(query)
-                + ",status=" + value(status));
+        return catalogResult(items, pageResult == null ? 0 : pageResult.getTotal(),
+                requestId, "single_store,name=" + value(pageQuery.getName())
+                        + ",status=" + value(status) + ",category_id=" + value(categoryId)
+                        + ",page=" + pageQuery.getPage() + ",page_size=" + pageQuery.getPageSize());
     }
 
     @GetMapping("/coupons")
@@ -537,6 +607,14 @@ public class InternalAgentAdminController {
         }
     }
 
+    private void validateCategoryCreate(InternalAgentAdminCategoryCreateDTO body) {
+        if (body == null || !StringUtils.hasText(body.getName()) || body.getName().length() > 64
+                || body.getType() == null || (body.getType() != 1 && body.getType() != 2)
+                || body.getSort() == null || body.getSort() < 0 || body.getSort() > 9999) {
+            throw new IllegalArgumentException("Valid category name, type and sort are required");
+        }
+    }
+
     private void validateDishCreate(InternalAgentAdminDishMutationDTO body) {
         if (!StringUtils.hasText(body.getName()) || body.getName().length() > 64
                 || body.getCategoryId() == null || body.getCategoryId() <= 0
@@ -720,8 +798,9 @@ public class InternalAgentAdminController {
     }
 
     private Map<String, Object> catalogResult(List<Map<String, Object>> items,
+                                               long total,
                                                String requestId, String scope) {
-        return success(mapOf("items", items, "total", items.size(),
+        return success(mapOf("items", items, "total", total,
                 "generated_at", LocalDateTime.now().toString(), "scope", scope,
                 "source", "spring_internal_api"), requestId);
     }
@@ -738,6 +817,10 @@ public class InternalAgentAdminController {
 
     private int safeLimit(Integer limit) {
         return Math.max(1, Math.min(limit == null ? 10 : limit, 20));
+    }
+
+    private int safePage(Integer page) {
+        return Math.max(1, page == null ? 1 : page);
     }
 
     private boolean matches(String value, String query) {

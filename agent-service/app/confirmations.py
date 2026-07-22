@@ -17,11 +17,12 @@ from app.schemas.confirmation import (
     ClaimCouponInput,
     ConfirmationCard,
     ConfirmationEdit,
+    CreateAdminCategoryInput,
+    CreateAdminDishInput,
     ManageCouponInput,
     SetShopStatusInput,
     UpdateCartItemInput,
     UpdateOrderActionInput,
-    CreateAdminDishInput,
 )
 
 
@@ -123,7 +124,7 @@ class ConfirmationStore:
                 "SELECT * FROM confirmations WHERE token_hash = ?", (token_hash,)
             ).fetchone()
             if row is None:
-                raise ConfirmationError("CONFIRMATION_INVALID", "确认信息无效，请重新发起操作。")
+                raise ConfirmationError("CONFIRMATION_INVALID", "确认信息无效，请重新发起操作")
             record = self._record(row)
             if (
                 record.agent_name != agent_name
@@ -131,14 +132,14 @@ class ConfirmationStore:
                 or record.actor_id != actor.id
                 or record.session_id != session_id
             ):
-                raise ConfirmationError("CONFIRMATION_FORBIDDEN", "确认信息与当前用户或会话不匹配。")
+                raise ConfirmationError("CONFIRMATION_FORBIDDEN", "确认信息与当前用户或会话不匹配")
             if record.expires_at <= datetime.now(UTC):
                 self._set_status(token_hash, "expired")
-                raise ConfirmationError("CONFIRMATION_EXPIRED", "确认已过期，请重新发起操作。")
+                raise ConfirmationError("CONFIRMATION_EXPIRED", "确认已过期，请重新发起操作")
             if record.status == "completed":
                 return record, True
             if record.status != "pending":
-                raise ConfirmationError("CONFIRMATION_CONSUMED", "该确认已处理，不能再次执行。")
+                raise ConfirmationError("CONFIRMATION_CONSUMED", "该确认已处理，不能再次执行")
             updated = self._connection.execute(
                 "UPDATE confirmations SET status = 'executing' "
                 "WHERE token_hash = ? AND status = 'pending'",
@@ -146,7 +147,7 @@ class ConfirmationStore:
             )
             self._connection.commit()
             if updated.rowcount != 1:
-                raise ConfirmationError("CONFIRMATION_CONSUMED", "该确认已处理，不能再次执行。")
+                raise ConfirmationError("CONFIRMATION_CONSUMED", "该确认已处理，不能再次执行")
             return ConfirmationRecord(
                 token_hash=record.token_hash,
                 agent_name=record.agent_name,
@@ -180,7 +181,7 @@ class ConfirmationStore:
             token, agent_name=agent_name, actor=actor, session_id=session_id
         )
         if replayed:
-            raise ConfirmationError("CONFIRMATION_CONSUMED", "该确认已经执行，无法撤销。")
+            raise ConfirmationError("CONFIRMATION_CONSUMED", "该确认已经执行，无法撤销")
         with self._lock:
             self._set_status(record.token_hash, "rejected")
         return record
@@ -326,7 +327,7 @@ class ConfirmationService:
         if action == "claim_coupon":
             args = ClaimCouponInput.model_validate(merged)
             return args.model_dump(), f"确认领取优惠券 {args.coupon_id} 吗？"
-        raise ConfirmationError("CONFIRMATION_NOT_EDITABLE", "该操作不支持修改，请取消后重新发起。")
+        raise ConfirmationError("CONFIRMATION_NOT_EDITABLE", "该操作不支持修改，请取消后重新发起")
 
     def _edited_admin_action(
         self, record: ConfirmationRecord, merged: dict[str, Any]
@@ -383,7 +384,24 @@ class ConfirmationService:
                 "risk": "high",
                 "audit_reason": args.audit_reason,
             }
-        raise ConfirmationError("CONFIRMATION_NOT_EDITABLE", "该管理操作不支持修改。")
+        if record.action == "create_admin_category":
+            args = CreateAdminCategoryInput.model_validate(merged)
+            arguments = args.model_dump(mode="json")
+            category_type = "菜品分类" if args.type == 1 else "套餐分类"
+            return arguments, f"确认新增{category_type}“{args.name}”，排序 {args.sort} 吗？", {
+                "resource": "category",
+                "new_value": {
+                    "name": args.name,
+                    "type": args.type,
+                    "sort": args.sort,
+                    "initial_status": 0,
+                },
+                "impact_count": 1,
+                "risk": "high",
+                "audit_reason": args.audit_reason,
+            }
+        raise ConfirmationError("CONFIRMATION_NOT_EDITABLE", "该管理操作不支持修改")
+
 
     async def execute_user_action(
         self,
@@ -458,10 +476,12 @@ class ConfirmationService:
                 result = await self.client.create_admin_dish(**common)
             elif record.action == "update_admin_dish":
                 result = await self.client.update_admin_dish(**common)
+            elif record.action == "create_admin_category":
+                result = await self.client.create_admin_category(**common)
             elif record.action == "create_admin_coupon":
                 result = await self.client.create_admin_coupon(**common)
             else:
-                raise ConfirmationError("CONFIRMATION_INVALID", "不支持的管理操作。")
+                raise ConfirmationError("CONFIRMATION_INVALID", "不支持的管理操作")
         except Exception:
             self.store.fail(record.token_hash)
             raise

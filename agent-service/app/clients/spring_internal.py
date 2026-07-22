@@ -375,6 +375,24 @@ class SpringInternalApiClient:
             idempotency_key=idempotency_key,
         )
 
+    async def create_admin_category(
+        self,
+        *,
+        request_id: str,
+        actor: ActorContext,
+        payload: dict[str, Any],
+        confirmation_token: str,
+        idempotency_key: str,
+    ) -> dict[str, Any]:
+        return await self._admin_write(
+            "/internal/agent/admin/categories",
+            request_id=request_id,
+            actor=actor,
+            payload=payload,
+            confirmation_token=confirmation_token,
+            idempotency_key=idempotency_key,
+        )
+
     async def create_admin_coupon(
         self,
         *,
