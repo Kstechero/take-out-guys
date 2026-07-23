@@ -55,7 +55,7 @@ class AdminOperationsAgentGraph(UserSupportAgentGraph):
                 answer=ADMIN_OUT_OF_SCOPE_MESSAGE,
                 trace_id=trace_id,
             )
-        return await super().run(request)
+        return await UserSupportAgentGraph.run(self, request)
 
     async def stream(self, request: ChatRequest):
         trace_id = str(uuid4())
@@ -69,7 +69,7 @@ class AdminOperationsAgentGraph(UserSupportAgentGraph):
                 "status": "completed",
             }
             return
-        async for event in super().stream(request):
+        async for event in UserSupportAgentGraph.stream(self, request):
             yield event
 
     def _is_admin_domain_message(self, message: str) -> bool:

@@ -1,4 +1,5 @@
 FROM maven:3.9.9-eclipse-temurin-17 AS build
+ENV MAVEN_OPTS="-XX:TieredStopAtLevel=1 -XX:+UseSerialGC"
 WORKDIR /src
 COPY backend/pom.xml ./pom.xml
 COPY backend/sky-common ./sky-common
@@ -7,6 +8,7 @@ COPY backend/sky-server ./sky-server
 RUN mvn -pl sky-server -am package -DskipTests
 
 FROM eclipse-temurin:17-jre
+ENV JAVA_TOOL_OPTIONS="-XX:TieredStopAtLevel=1 -XX:+UseSerialGC"
 WORKDIR /app
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
