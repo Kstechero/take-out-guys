@@ -6,7 +6,17 @@
 
 ## 启动与观测
 
-使用 `docker compose -f docker-compose.agent.yml up -d --build`。检查 `/health`、`/metrics`、Spring `/doc.html` 和 Redis `PING`。Prometheus 默认位于 9090，告警至少覆盖 5xx 比例、429 比例、请求延迟、Agent 不可用响应和 Spring 熔断开启。
+首次启动先复制环境变量模板并替换全部 `replace-with-...` 值：
+
+```powershell
+Copy-Item .env.agent.example .env
+docker compose -f docker-compose.agent.yml config
+docker compose -f docker-compose.agent.yml up -d --build
+```
+
+Compose 会启动 MySQL、Redis、PostgreSQL、Spring Boot、Agent Service 和 Prometheus。当前完整的 `sky.sql` 已包含优惠券、AI 会话和评价表，只在 MySQL 数据卷首次创建时执行；`coupon.sql`、`coupon_order.sql` 和 `ai_review_service.sql` 仅供历史数据库增量升级，不能与完整初始化脚本重复执行。已有数据卷不会再次执行初始化脚本。检查 Agent `/health`、`/metrics`、Spring `/doc.html`、Redis `PING`、MySQL `mysqladmin ping` 和 PostgreSQL `pg_isready`。Prometheus 默认位于 9090，告警至少覆盖 5xx 比例、429 比例、请求延迟、Agent 不可用响应和 Spring 熔断开启。
+
+管理写能力在模板中默认使用 `AGENT_INTERNAL_WRITES_ENABLED=false`。只读和确认链路完成冒烟后，才允许在受控环境改为 `true`。当前 confirmation store 使用共享卷中的 SQLite；Compose 默认保持单个 Agent Service 副本。扩容前必须迁移为真正的共享确认存储，或为同一会话配置粘性路由。
 
 ## 灰度与熔断
 

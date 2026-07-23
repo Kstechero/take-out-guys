@@ -27,8 +27,9 @@ export default {
 		// 	return num
 		// }
 		ht: function () {
-			let res = uni.getMenuButtonBoundingClientRect() 
-			return res.top +5
+			if (typeof uni.getMenuButtonBoundingClientRect !== 'function') return 5
+			const res = uni.getMenuButtonBoundingClientRect()
+			return res.top + 5
 		}
 	},
 	methods: {

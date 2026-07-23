@@ -108,7 +108,9 @@ export default {
 			return orderData
 		},
 		ht: function () {
-			return uni.getMenuButtonBoundingClientRect().top + uni.getMenuButtonBoundingClientRect().height + 7
+			if (typeof uni.getMenuButtonBoundingClientRect !== 'function') return 51
+			const menuButton = uni.getMenuButtonBoundingClientRect()
+			return menuButton.top + menuButton.height + 7
 		}
 	},
 	components: { navBar, uniIcons },
@@ -120,7 +122,10 @@ export default {
 		})
 		if (options) {
 			if (!options.status && !options.formOrder) {
+				// 微信登录与用户授权仅在微信小程序端发起，H5 用于布局和降级联调。
+				// #ifdef MP-WEIXIN
 				this.getData()
+				// #endif
 			}
 		}
 		// 有sessionId免授权
@@ -149,7 +154,9 @@ export default {
 			})
 		},
 		getData () {
-			let res = wx.getMenuButtonBoundingClientRect()
+			const res = typeof uni.getMenuButtonBoundingClientRect === 'function'
+				? uni.getMenuButtonBoundingClientRect()
+				: { height: 44 }
 			let _this = this
 			this.selectHeight = res.height
 			uni.showModal({

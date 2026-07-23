@@ -1,5 +1,36 @@
 {
+  "name": "takeout-guys-user-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "predev:h5": "node scripts/sync-cli-source.mjs",
+    "dev:h5": "uni",
+    "prebuild:h5": "node scripts/sync-cli-source.mjs",
+    "build:h5": "uni build",
+    "predev:mp-weixin": "node scripts/sync-cli-source.mjs",
+    "dev:mp-weixin": "uni -p mp-weixin",
+    "prebuild:mp-weixin": "node scripts/sync-cli-source.mjs",
+    "build:mp-weixin": "uni build -p mp-weixin",
+    "check": "npm run build:h5 && npm run build:mp-weixin"
+  },
   "dependencies": {
+    "@dcloudio/uni-app": "3.0.0-5010520260709002",
+    "@dcloudio/uni-components": "3.0.0-5010520260709002",
+    "@dcloudio/uni-h5": "3.0.0-5010520260709002",
+    "@dcloudio/uni-mp-weixin": "3.0.0-5010520260709002",
+    "vue": "^3.4.21",
+    "vue-i18n": "^9.1.9",
     "vuex": "^4.1.0"
+  },
+  "devDependencies": {
+    "@dcloudio/types": "^3.4.8",
+    "@dcloudio/uni-cli-shared": "3.0.0-5010520260709002",
+    "@dcloudio/vite-plugin-uni": "3.0.0-5010520260709002",
+    "rollup": "4.14.3",
+    "sass": "^1.89.2",
+    "vite": "5.2.8"
+  },
+  "engines": {
+    "node": ">=18 <25"
   }
 }

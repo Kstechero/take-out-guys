@@ -1,6 +1,27 @@
 services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: sky_take_out
+      MYSQL_USER: ${SKY_MYSQL_USER:-sky}
+      MYSQL_PASSWORD: ${SKY_MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${SKY_MYSQL_ROOT_PASSWORD}
+      TZ: Asia/Shanghai
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    volumes:
+      - agent-mysql:/var/lib/mysql
+      - ./backend/database/sky.sql:/docker-entrypoint-initdb.d/01-sky.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
   redis:
     image: redis:7.4-alpine
+    restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - agent-redis:/data
@@ -12,6 +33,7 @@ services:
 
   postgres:
     image: postgres:17-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_DB: agent_state
       POSTGRES_USER: agent
@@ -25,22 +47,45 @@ services:
       retries: 20
 
   backend:
+    restart: unless-stopped
     build:
       context: .
       dockerfile: backend/Dockerfile
     environment:
+      SPRING_PROFILES_ACTIVE: dev
       AGENT_SERVICE_BASE_URL: http://agent-service:8000
       AGENT_SERVICE_AUTH_TOKEN: ${AGENT_SERVICE_AUTH_TOKEN}
       AGENT_INTERNAL_AUTH_TOKEN: ${AGENT_INTERNAL_AUTH_TOKEN}
-      SKY_DATASOURCE_HOST: host.docker.internal
+      AGENT_INTERNAL_WRITES_ENABLED: ${AGENT_INTERNAL_WRITES_ENABLED:-false}
+      SKY_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      SKY_DATASOURCE_HOST: mysql
+      SKY_DATASOURCE_PORT: 3306
+      SKY_DATASOURCE_DATABASE: sky_take_out
+      SKY_DATASOURCE_USERNAME: ${SKY_MYSQL_USER:-sky}
+      SKY_DATASOURCE_PASSWORD: ${SKY_MYSQL_PASSWORD}
       SKY_REDIS_HOST: redis
+      SKY_REDIS_PORT: 6379
+      SKY_REDIS_DATABASE: 0
       SKY_REDIS_PASSWORD: ""
+      SKY_WECHAT_APPID: ${SKY_WECHAT_APPID:-your-wechat-appid}
+      SKY_WECHAT_SECRET: ${SKY_WECHAT_SECRET:-your-wechat-secret}
     ports: ["8080:8080"]
+    volumes:
+      - backend-uploads:/app/uploads
     depends_on:
+      mysql:
+        condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8080/doc.html"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
 
   agent-service:
+    restart: unless-stopped
     build:
       context: .
       dockerfile: agent-service/Dockerfile
@@ -63,19 +108,30 @@ services:
     ports: ["8000:8000"]
     depends_on:
       backend:
-        condition: service_started
+        condition: service_healthy
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
 
   prometheus:
     image: prom/prometheus:v3.5.0
+    restart: unless-stopped
     command: ["--config.file=/etc/prometheus/prometheus.yml"]
     volumes:
       - ./deploy/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports: ["9090:9090"]
-    depends_on: [agent-service]
+    depends_on:
+      agent-service:
+        condition: service_healthy
 
 volumes:
+  agent-mysql:
   agent-redis:
   agent-state:
   agent-postgres:
+  backend-uploads:

@@ -15,6 +15,16 @@
 npm install
 ```
 
+项目同时提供可重复执行的 uni-app CLI 构建。源代码仍保持 HBuilderX 工程布局；构建前脚本会把必要文件同步到已忽略的 `src/` 临时目录：
+
+```bash
+npm run build:h5
+npm run build:mp-weixin
+npm run check
+```
+
+CLI 依赖版本与 DCloud Vue 3/Vite 正式模板保持一致。建议使用 Node.js 18 或 20；Node.js 24 仅用于兼容性验证，不作为团队默认版本。
+
 在 HBuilderX 中选择“运行到小程序模拟器 → 微信开发者工具”。接口和真机地址配置参见 [API_INTEGRATION.md](./API_INTEGRATION.md)。
 
 <!-- ## 瑞吉外卖 - 小程序  即（瑞吉外卖）
